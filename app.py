@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_migrate import Migrate
+# import movie
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -7,9 +9,9 @@ app.config.from_object('config')
 def hello():
     return 'Hello, Flask!'
 
-@app.route('/test')
+@app.route('/api')
 def other1():
-    return "テストページです！"
+    return "API!API!"
 
 if __name__ == '__main__':
     app.run()
