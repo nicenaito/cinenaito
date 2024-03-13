@@ -1,7 +1,6 @@
 from flask import Flask
-from models import db
+from models.movie import db
 from jobs import job
-
 
 app = Flask(__name__)
 

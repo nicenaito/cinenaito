@@ -1,7 +1,11 @@
-from postgresql import SQLALCHEMY_DATABASE_URI as DATABASE_URI
-
 DEBUG = True
+JSON_AS_ASCII = False
 
-SQLALCHEMY_DATABASE_URI = DATABASE_URI
 SQLALCHEMY_TRACK_MODIFICATIONS = True
 SQLALCHEMY_ECHO = True
+SQLALCHEMY_DATABASE_URI = 'postgresql+psycopg2://{user}:{password}@{host}/{name}'.format(**{
+    'user': 'cinenaito',
+    'password': 'cinenaito+',
+    'host': '127.0.0.1',
+    'name': 'cinenaito'
+})

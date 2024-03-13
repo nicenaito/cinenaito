@@ -1,5 +1,5 @@
 # coding:utf-8
-
+from flask import jsonify
 import requests
 import os
 
@@ -25,9 +25,24 @@ def get_nearby_movie_theaters(latitude, longitude, radius=1000):
 
     try:
         response = requests.get(url)
+        # SWARMのAPIがエラーレスポンスを返した場合はエラー処理
+        if response.status_code != 200:
+            return jsonify({'error': 'Failed to fetch nearby theaters'}), 500
+
         data = response.json()
-        theaters = data["response"]["venues"]
-        return theaters
+        
+         # 映画館リストを抽出
+        theaters = []
+        for venue in data["response"]["venues"]:
+            theaters.append({
+                'name': venue['name'],
+                'address': venue.get('location', {}).get('address', ''),
+                'latitude': venue['location']['lat'],
+                'longitude': venue['location']['lng']
+            })
+
+        return jsonify(theaters)
+        
     except Exception as e:
         print(f"Error fetching data from Foursquare API: {e}")
         return []
