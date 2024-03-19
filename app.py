@@ -4,10 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 from models.database import db, init_db
 from models.user import User
 from models.movie import Movie
+from models.watchlog import Watchlog
+from models.theater import Theater
 from flask import flash, redirect, url_for
 import theatrelist
 from flask_login import current_user, login_required, login_user, LoginManager, logout_user
 from forms import LoginForm
+from datetime import date
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -39,6 +42,38 @@ def get_nearby_theaters():
     nearby_theaters = theatrelist.get_nearby_movie_theaters(latitude, longitude)
 
     return nearby_theaters
+
+@app.route('/api/v1/watchlog', methods=['POST'])
+def add_watchlog():
+    
+    json = request.get_json()
+    if type(json) == list:
+        data = json[0]
+    else:
+        data = json
+    
+    # theatersテーブルに登録/更新
+    theater = Theater()
+    theater.theater_id = data["theater_id"]
+    theater.theater_name = data["theater_name"]
+    theater.theater_address = data["address"]
+    theater.latitude = data["latitude"]
+    theater.longitude = data["longitude"]
+    db.session.merge(theater)
+    # db.session.commit()
+    
+    # watchlogテーブルに登録/更新
+    watchlog = Watchlog()
+    watchlog.movie_id = data["movie_id"]
+    watchlog.user_id = data["user_id"]
+    watchlog.theater_id = data["theater_id"]
+    watchlog.viewed_date = date.fromisoformat(data["watched_date"])
+    
+    db.session.merge(watchlog)
+    db.session.commit()
+    
+    
+    return "Log the watched movie!"
 
 @app.route('/movielog', methods=['POST'])
 def movielog():

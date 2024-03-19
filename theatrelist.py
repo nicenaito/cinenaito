@@ -35,6 +35,7 @@ def get_nearby_movie_theaters(latitude, longitude, radius=1000):
         theaters = []
         for venue in data["response"]["venues"]:
             theaters.append({
+                'id': venue['id'],
                 'name': venue['name'],
                 'address': venue.get('location', {}).get('address', ''),
                 'latitude': venue['location']['lat'],
