@@ -43,6 +43,30 @@ def get_nearby_theaters():
 
     return nearby_theaters
 
+@app.route('/api/v1/movies', methods=['GET'])
+def get_playing_movies():
+    """
+    上映中の映画の一覧を取得する
+
+    :return: 上映中の映画情報のリスト(辞書型)
+    [
+        {
+            "id": 映画ID,
+            "title": 映画タイトル
+        },
+        ...
+    ]
+    """
+    movies = db.session.query(Movie).all()
+    playing_movies = []
+    for movie in movies:
+        movie_dict = {
+            "movie_id": movie.movie_id,
+            "movie_title": movie.movie_title
+        }
+        playing_movies.append(movie_dict)
+    return playing_movies
+
 @app.route('/api/v1/watchlog', methods=['POST'])
 def add_watchlog():
     
