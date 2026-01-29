@@ -1,0 +1,84 @@
+/**
+ * YouTube URLから動画IDを抽出
+ */
+export function extractYouTubeVideoId(url: string): string | null {
+  if (!url) return null
+  
+  const patterns = [
+    // https://www.youtube.com/watch?v=VIDEO_ID
+    /(?:youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/,
+    // https://youtu.be/VIDEO_ID
+    /(?:youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+    // https://www.youtube.com/embed/VIDEO_ID
+    /(?:youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    // https://www.youtube.com/v/VIDEO_ID
+    /(?:youtube\.com\/v\/)([a-zA-Z0-9_-]{11})/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return match[1]
+    }
+  }
+
+  return null
+}
+
+/**
+ * 月の表示形式を取得 (例: "2026年1月")
+ */
+export function formatMonth(targetMonth: string): string {
+  const [year, month] = targetMonth.split('-')
+  return `${year}年${parseInt(month)}月`
+}
+
+/**
+ * 現在の月をYYYY-MM形式で取得
+ */
+export function getCurrentMonth(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
+}
+
+/**
+ * 月のリストを生成（前後6ヶ月）
+ */
+export function generateMonthOptions(): { value: string; label: string }[] {
+  const months: { value: string; label: string }[] = []
+  const now = new Date()
+  
+  for (let i = -3; i <= 6; i++) {
+    const date = new Date(now.getFullYear(), now.getMonth() + i, 1)
+    const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    const label = `${date.getFullYear()}年${date.getMonth() + 1}月`
+    months.push({ value, label })
+  }
+  
+  return months
+}
+
+/**
+ * 相対時間を表示
+ */
+export function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / (1000 * 60))
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffMins < 1) return 'たった今'
+  if (diffMins < 60) return `${diffMins}分前`
+  if (diffHours < 24) return `${diffHours}時間前`
+  if (diffDays < 7) return `${diffDays}日前`
+  
+  return date.toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
