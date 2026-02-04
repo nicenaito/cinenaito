@@ -56,6 +56,18 @@ npm run dev
 3. 環境変数を設定: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 4. Supabase > Authentication > URL Configuration に本番URLを追加
 
+## 管理者ユーザー
+
+`profiles.is_admin` が `true` のユーザーは、投稿・コメントを削除できます。
+
+例: Supabase SQL Editor で管理者に昇格
+
+```sql
+UPDATE profiles
+SET is_admin = true
+WHERE id = 'YOUR_USER_ID';
+```
+
 ## データベース構造
 
 | テーブル | 説明 |

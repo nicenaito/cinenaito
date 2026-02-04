@@ -25,6 +25,7 @@ interface Comment {
 interface PlanDetailClientProps {
   planId: string
   currentUserId: string
+  isAdmin: boolean
   initialReacted: boolean
   initialReactionCount: number
   comments: Comment[]
@@ -33,6 +34,7 @@ interface PlanDetailClientProps {
 export function PlanDetailClient({
   planId,
   currentUserId,
+  isAdmin,
   initialReacted,
   initialReactionCount,
   comments: initialComments,
@@ -153,7 +155,7 @@ export function PlanDetailClient({
                       <span className="text-xs text-slate-500">
                         {formatRelativeTime(comment.created_at)}
                       </span>
-                      {comment.user_id === currentUserId && (
+                      {(comment.user_id === currentUserId || isAdmin) && (
                         <Button
                           variant="ghost"
                           size="sm"

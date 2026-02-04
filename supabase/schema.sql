@@ -18,6 +18,7 @@ CREATE TABLE profiles (
   username TEXT NOT NULL,
   avatar_url TEXT,
   discord_id TEXT UNIQUE,
+  is_admin BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -51,6 +52,23 @@ CREATE POLICY "Users can update own profile"
   TO authenticated
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- 管理者は全プロフィールを更新可能
+CREATE POLICY "Admins can update all profiles"
+  ON profiles FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- 新規ユーザー作成時に自動的にプロフィール作成
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -120,11 +138,39 @@ CREATE POLICY "Users can update own movie plans"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- 管理者は全投稿を編集可能
+CREATE POLICY "Admins can update all movie plans"
+  ON movie_plans FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
 -- 自分の投稿のみ削除可能
 CREATE POLICY "Users can delete own movie plans"
   ON movie_plans FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全投稿を削除可能
+CREATE POLICY "Admins can delete all movie plans"
+  ON movie_plans FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- 3. plan_comments テーブル
@@ -170,11 +216,39 @@ CREATE POLICY "Users can update own comments"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- 管理者は全コメントを編集可能
+CREATE POLICY "Admins can update all comments"
+  ON plan_comments FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
 -- 自分のコメントのみ削除可能
 CREATE POLICY "Users can delete own comments"
   ON plan_comments FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全コメントを削除可能
+CREATE POLICY "Admins can delete all comments"
+  ON plan_comments FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- 4. reactions テーブル
@@ -213,6 +287,17 @@ CREATE POLICY "Users can delete own reactions"
   ON reactions FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全リアクションを削除可能
+CREATE POLICY "Admins can delete all reactions"
+  ON reactions FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- ビュー: 投稿詳細（リアクション数・コメント数含む）

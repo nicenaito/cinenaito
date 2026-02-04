@@ -44,7 +44,7 @@ export default function LoginPage({
               Discordでログイン
             </Button>
           </form>
-          
+
           <p className="text-center text-sm text-muted-foreground">
             ログインすることで、利用規約とプライバシーポリシーに同意したものとみなされます。
           </p>

@@ -13,6 +13,7 @@ import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
 import { ExpectationLevel } from '@/types/database.types'
+import { getIsAdmin } from '@/lib/admin'
 
 interface MoviePlanWithProfile {
   id: string
@@ -57,6 +58,8 @@ export default async function PlanDetailPage({
   if (!user) {
     redirect('/login')
   }
+
+  const isAdmin = await getIsAdmin(supabase, user.id)
 
   const { id } = await params
 
@@ -135,7 +138,7 @@ export default async function PlanDetailPage({
                   <h1 className="text-2xl font-bold text-white">{plan.title}</h1>
                   <ExpectationBadge expectation={plan.expectation} />
                 </div>
-                {plan.user_id === user.id && (
+                {(plan.user_id === user.id || isAdmin) && (
                   <form action={handleDeletePlan}>
                     <Button variant="outline" className="w-fit border-red-500 text-red-400 hover:bg-red-500/10">
                       この投稿を削除
@@ -191,6 +194,7 @@ export default async function PlanDetailPage({
           <PlanDetailClient
             planId={id}
             currentUserId={user.id}
+            isAdmin={isAdmin}
             initialReacted={!!reaction}
             initialReactionCount={reactionCount || 0}
             comments={comments}

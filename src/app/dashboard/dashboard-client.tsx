@@ -12,6 +12,7 @@ interface DashboardClientProps {
   plans: MoviePlanWithStats[]
   selectedMonth: string
   currentUserId: string
+  isAdmin: boolean
   reactedPlanIds: string[]
 }
 
@@ -19,6 +20,7 @@ export function DashboardClient({
   plans,
   selectedMonth,
   currentUserId,
+  isAdmin,
   reactedPlanIds,
 }: DashboardClientProps) {
   const router = useRouter()
@@ -72,6 +74,7 @@ export function DashboardClient({
               key={plan.id}
               plan={plan}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
               userReacted={reactedPlanIds.includes(plan.id)}
               onReaction={handleReaction}
               onDelete={handleDelete}

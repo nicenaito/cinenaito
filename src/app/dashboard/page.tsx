@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
+import { getIsAdmin } from '@/lib/admin'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
@@ -20,6 +21,8 @@ export default async function DashboardPage({
   if (!user) {
     redirect('/login')
   }
+
+  const isAdmin = await getIsAdmin(supabase, user.id)
 
   const params = await searchParams
   const selectedMonth = params.month || 'all'
@@ -57,6 +60,7 @@ export default async function DashboardPage({
           plans={plans || []}
           selectedMonth={selectedMonth}
           currentUserId={user.id}
+          isAdmin={isAdmin}
           reactedPlanIds={Array.from(reactedPlanIds)}
         />
       </main>

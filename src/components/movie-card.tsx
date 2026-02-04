@@ -14,6 +14,7 @@ import Link from 'next/link'
 interface MovieCardProps {
   plan: MoviePlanWithStats
   currentUserId?: string
+  isAdmin?: boolean
   userReacted: boolean
   onReaction: (planId: string) => Promise<{ success: boolean; reacted: boolean }>
   onDelete?: (planId: string) => Promise<void>
@@ -22,11 +23,13 @@ interface MovieCardProps {
 export function MovieCard({
   plan,
   currentUserId,
+  isAdmin = false,
   userReacted,
   onReaction,
   onDelete,
 }: MovieCardProps) {
   const isOwner = currentUserId === plan.user_id
+  const canDelete = isOwner || isAdmin
 
   const handleDelete = async () => {
     if (!onDelete) return
@@ -118,7 +121,7 @@ export function MovieCard({
             </Button>
           </Link>
 
-          {isOwner && onDelete && (
+          {canDelete && onDelete && (
             <Button
               variant="ghost"
               size="sm"
