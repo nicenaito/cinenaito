@@ -60,6 +60,10 @@ npm run dev
 
 `profiles.is_admin` が `true` のユーザーは、投稿・コメントを削除できます。
 
+### 管理者昇格（UI）
+
+管理者ユーザーは /admin/users で一般ユーザーを管理者にできます。
+
 例: Supabase SQL Editor で管理者に昇格
 
 ```sql

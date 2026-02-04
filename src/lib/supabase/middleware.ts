@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // 未認証ユーザーを保護されたルートからリダイレクト
-  const protectedRoutes = ['/dashboard', '/new', '/profile']
+  const protectedRoutes = ['/dashboard', '/new', '/profile', '/admin']
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   )
