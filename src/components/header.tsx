@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Film, Plus, LogOut } from 'lucide-react'
+import { Film, Plus, LogOut, Shield } from 'lucide-react'
 import { Profile } from '@/types/database.types'
 
 export async function Header() {
@@ -28,8 +28,16 @@ export async function Header() {
           <span className="font-bold text-xl">CineNaito</span>
         </Link>
 
-        {user && (
+        {user ? (
           <div className="flex items-center gap-4">
+            {profile?.is_admin && (
+              <Link href="/admin/users">
+                <Button variant="outline" size="sm" className="gap-2 border-emerald-500 text-emerald-400 hover:bg-emerald-500/10">
+                  <Shield className="w-4 h-4" />
+                  管理
+                </Button>
+              </Link>
+            )}
             <Link href="/new">
               <Button variant="outline" size="sm" className="gap-2 border-purple-500 text-purple-400 hover:bg-purple-500/10">
                 <Plus className="w-4 h-4" />
@@ -54,6 +62,19 @@ export async function Header() {
                 <LogOut className="w-4 h-4" />
               </Button>
             </form>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+                ログイン
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                新規登録
+              </Button>
+            </Link>
           </div>
         )}
       </div>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { toggleReaction, addComment, deleteComment } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -24,7 +26,9 @@ interface Comment {
 
 interface PlanDetailClientProps {
   planId: string
-  currentUserId: string
+  currentUserId?: string
+  isAdmin: boolean
+  isLoggedIn: boolean
   initialReacted: boolean
   initialReactionCount: number
   comments: Comment[]
@@ -33,10 +37,14 @@ interface PlanDetailClientProps {
 export function PlanDetailClient({
   planId,
   currentUserId,
+  isAdmin,
+  isLoggedIn,
   initialReacted,
   initialReactionCount,
   comments: initialComments,
 }: PlanDetailClientProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [reacted, setReacted] = useState(initialReacted)
   const [reactionCount, setReactionCount] = useState(initialReactionCount)
   const [comments, setComments] = useState(initialComments)
@@ -44,7 +52,17 @@ export function PlanDetailClient({
   const [isPending, startTransition] = useTransition()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const handleRequireLogin = () => {
+    toast.error('ログインが必要です')
+    const next = pathname || `/plans/${planId}`
+    router.push(`/login?next=${encodeURIComponent(next)}`)
+  }
+
   const handleReaction = () => {
+    if (!isLoggedIn) {
+      handleRequireLogin()
+      return
+    }
     const newReacted = !reacted
     const newCount = newReacted ? reactionCount + 1 : reactionCount - 1
     setReacted(newReacted)
@@ -61,6 +79,10 @@ export function PlanDetailClient({
   }
 
   const handleSubmitComment = async () => {
+    if (!isLoggedIn || !currentUserId) {
+      handleRequireLogin()
+      return
+    }
     if (!newComment.trim()) return
 
     setIsSubmitting(true)
@@ -153,7 +175,7 @@ export function PlanDetailClient({
                       <span className="text-xs text-slate-500">
                         {formatRelativeTime(comment.created_at)}
                       </span>
-                      {comment.user_id === currentUserId && (
+                      {(comment.user_id === currentUserId || isAdmin) && (
                         <Button
                           variant="ghost"
                           size="sm"
@@ -184,10 +206,11 @@ export function PlanDetailClient({
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               className="bg-slate-900 border-slate-600 text-white min-h-[80px]"
+              disabled={!isLoggedIn}
             />
             <Button
               onClick={handleSubmitComment}
-              disabled={isSubmitting || !newComment.trim()}
+              disabled={isSubmitting || !newComment.trim() || !isLoggedIn}
               className="bg-purple-600 hover:bg-purple-700 self-end"
             >
               {isSubmitting ? (
@@ -197,6 +220,15 @@ export function PlanDetailClient({
               )}
             </Button>
           </div>
+          {!isLoggedIn && (
+            <p className="text-sm text-slate-400">
+              コメントやリアクションには{' '}
+              <Link href={`/login?next=${encodeURIComponent(pathname || `/plans/${planId}`)}`} className="text-purple-400 hover:text-purple-300">
+                ログイン
+              </Link>
+              が必要です。
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

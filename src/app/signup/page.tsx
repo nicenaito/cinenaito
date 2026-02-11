@@ -1,25 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { signInWithPassword } from '@/app/auth/actions'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { signUpWithPassword } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Film } from 'lucide-react'
 import { toast } from 'sonner'
-import Link from 'next/link'
 
-export default function LoginPage({
+export default function SignupPage({
   searchParams,
 }: {
-  searchParams: { error?: string; message?: string; next?: string }
+  searchParams: { next?: string }
 }) {
+  const router = useRouter()
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const nextPath = searchParams?.next || null
+  const nextPath = searchParams?.next || '/dashboard'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,13 +30,23 @@ export default function LoginPage({
     setIsLoading(true)
 
     try {
-      const result = await signInWithPassword(email, password, nextPath)
+      const result = await signUpWithPassword(email, password, username)
       if (!result.success) {
-        setError(result.error || 'ログインに失敗しました')
-        toast.error(result.error || 'ログインに失敗しました')
+        setError(result.error || '新規登録に失敗しました')
+        toast.error(result.error || '新規登録に失敗しました')
+        return
       }
+
+      if (result.needsEmailConfirmation) {
+        toast.success('登録確認メールを送信しました')
+        router.push('/login?message=check_email')
+        return
+      }
+
+      toast.success('アカウントを作成しました')
+      router.push(nextPath)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'ログインに失敗しました'
+      const message = err instanceof Error ? err.message : '新規登録に失敗しました'
       setError(message)
       toast.error(message)
     } finally {
@@ -49,21 +62,28 @@ export default function LoginPage({
             <Film className="w-8 h-8 text-white" />
           </div>
           <CardTitle className="text-2xl font-bold">CineNaito</CardTitle>
-          <CardDescription>ログイン</CardDescription>
+          <CardDescription>新規登録</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {searchParams?.message === 'check_email' && (
-            <div className="text-sm text-emerald-600 bg-emerald-50 p-3 rounded">
-              登録確認メールを送信しました。メール内のリンクを開いてからログインしてください。
-            </div>
-          )}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">ユーザー名</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="映画好き太郎"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">メールアドレス</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -80,6 +100,7 @@ export default function LoginPage({
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                minLength={6}
               />
             </div>
             {error && (
@@ -87,26 +108,23 @@ export default function LoginPage({
                 {error}
               </div>
             )}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white"
               size="lg"
               disabled={isLoading}
             >
-              {isLoading ? 'ログイン中...' : 'ログイン'}
+              {isLoading ? '登録中...' : '新規登録'}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
-            ログインして投稿やリアクションができます。
-          </p>
-          <p className="text-center text-sm text-muted-foreground">
-            アカウントをお持ちでない方は{' '}
+            すでにアカウントをお持ちの方は{' '}
             <Link
-              href={nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : '/signup'}
+              href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
               className="text-purple-400 hover:text-purple-300"
             >
-              新規登録
+              ログイン
             </Link>
           </p>
         </CardContent>

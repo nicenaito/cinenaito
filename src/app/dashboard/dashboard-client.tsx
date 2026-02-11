@@ -1,17 +1,20 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
 import { MoviePlanWithStats } from '@/types/database.types'
 import { Film } from 'lucide-react'
+import { toast } from 'sonner'
 
 interface DashboardClientProps {
   plans: MoviePlanWithStats[]
   selectedMonth: string
-  currentUserId: string
+  currentUserId?: string
+  isAdmin?: boolean
+  isLoggedIn: boolean
   reactedPlanIds: string[]
 }
 
@@ -19,9 +22,12 @@ export function DashboardClient({
   plans,
   selectedMonth,
   currentUserId,
+  isAdmin = false,
+  isLoggedIn,
   reactedPlanIds,
 }: DashboardClientProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const [items, setItems] = useState(plans)
 
   const handleMonthChange = (value: string) => {
@@ -32,7 +38,17 @@ export function DashboardClient({
     }
   }
 
+  const handleRequireLogin = () => {
+    toast.error('リアクションにはログインが必要です')
+    const next = pathname || '/dashboard'
+    router.push(`/login?next=${encodeURIComponent(next)}`)
+  }
+
   const handleReaction = async (planId: string) => {
+    if (!isLoggedIn) {
+      handleRequireLogin()
+      return { success: false, reacted: false }
+    }
     return await toggleReaction(planId)
   }
 
@@ -72,8 +88,11 @@ export function DashboardClient({
               key={plan.id}
               plan={plan}
               currentUserId={currentUserId}
+              isAdmin={isAdmin}
+              isLoggedIn={isLoggedIn}
               userReacted={reactedPlanIds.includes(plan.id)}
               onReaction={handleReaction}
+              onRequireLogin={handleRequireLogin}
               onDelete={handleDelete}
             />
           ))}

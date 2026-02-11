@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
+import { getIsAdmin } from '@/lib/admin'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
@@ -16,10 +16,7 @@ export default async function DashboardPage({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const isAdmin = user ? await getIsAdmin(supabase, user.id) : false
 
   const params = await searchParams
   const selectedMonth = params.month || 'all'
@@ -41,13 +38,16 @@ export default async function DashboardPage({
   }
 
   // ユーザーのリアクション状態を取得
-  const { data: userReactions } = await supabase
-    .from('reactions')
-    .select('plan_id')
-    .eq('user_id', user.id)
-    .returns<{ plan_id: string }[]>()
+  let reactedPlanIds = new Set<string>()
+  if (user) {
+    const { data: userReactions } = await supabase
+      .from('reactions')
+      .select('plan_id')
+      .eq('user_id', user.id)
+      .returns<{ plan_id: string }[]>()
 
-  const reactedPlanIds = new Set(userReactions?.map((r) => r.plan_id) || [])
+    reactedPlanIds = new Set(userReactions?.map((r) => r.plan_id) || [])
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
@@ -56,7 +56,9 @@ export default async function DashboardPage({
         <DashboardClient
           plans={plans || []}
           selectedMonth={selectedMonth}
-          currentUserId={user.id}
+          currentUserId={user?.id}
+          isAdmin={isAdmin}
+          isLoggedIn={!!user}
           reactedPlanIds={Array.from(reactedPlanIds)}
         />
       </main>

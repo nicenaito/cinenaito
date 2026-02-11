@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { MoviePlanFormData } from '@/lib/validations'
 import { Database } from '@/types/database.types'
+import { getIsAdmin } from '@/lib/admin'
 
 type MoviePlanInsert = Database['public']['Tables']['movie_plans']['Insert']
 type ReactionInsert = Database['public']['Tables']['reactions']['Insert']
@@ -46,11 +47,16 @@ export async function deleteMoviePlan(planId: string) {
     return { success: false, error: '認証が必要です' }
   }
 
-  const { error } = await supabase
+  const isAdmin = await getIsAdmin(supabase, user.id)
+
+  const deleteQuery = supabase
     .from('movie_plans')
     .delete()
     .eq('id', planId)
-    .eq('user_id', user.id)
+
+  const { error } = isAdmin
+    ? await deleteQuery
+    : await deleteQuery.eq('user_id', user.id)
 
   if (error) {
     console.error('削除エラー:', error)
@@ -140,11 +146,16 @@ export async function deleteComment(commentId: string, planId: string) {
     return { success: false, error: '認証が必要です' }
   }
 
-  const { error } = await supabase
+  const isAdmin = await getIsAdmin(supabase, user.id)
+
+  const deleteQuery = supabase
     .from('plan_comments')
     .delete()
     .eq('id', commentId)
-    .eq('user_id', user.id)
+
+  const { error } = isAdmin
+    ? await deleteQuery
+    : await deleteQuery.eq('user_id', user.id)
 
   if (error) {
     console.error('コメント削除エラー:', error)

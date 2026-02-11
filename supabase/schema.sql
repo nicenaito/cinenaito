@@ -18,6 +18,7 @@ CREATE TABLE profiles (
   username TEXT NOT NULL,
   avatar_url TEXT,
   discord_id TEXT UNIQUE,
+  is_admin BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -39,10 +40,10 @@ CREATE TRIGGER profiles_updated_at
 -- RLS ポリシー: profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全プロフィールを閲覧可能
-CREATE POLICY "Authenticated users can view all profiles"
+-- 全ユーザーは全プロフィールを閲覧可能
+CREATE POLICY "Public users can view all profiles"
   ON profiles FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 自分のプロフィールのみ編集可能
@@ -51,6 +52,23 @@ CREATE POLICY "Users can update own profile"
   TO authenticated
   USING (auth.uid() = id)
   WITH CHECK (auth.uid() = id);
+
+-- 管理者は全プロフィールを更新可能
+CREATE POLICY "Admins can update all profiles"
+  ON profiles FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- 新規ユーザー作成時に自動的にプロフィール作成
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -101,10 +119,10 @@ CREATE TRIGGER movie_plans_updated_at
 -- RLS ポリシー: movie_plans
 ALTER TABLE movie_plans ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全投稿を閲覧可能
-CREATE POLICY "Authenticated users can view all movie plans"
+-- 全ユーザーは全投稿を閲覧可能
+CREATE POLICY "Public users can view all movie plans"
   ON movie_plans FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 自分の投稿のみ作成可能
@@ -120,11 +138,39 @@ CREATE POLICY "Users can update own movie plans"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- 管理者は全投稿を編集可能
+CREATE POLICY "Admins can update all movie plans"
+  ON movie_plans FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
 -- 自分の投稿のみ削除可能
 CREATE POLICY "Users can delete own movie plans"
   ON movie_plans FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全投稿を削除可能
+CREATE POLICY "Admins can delete all movie plans"
+  ON movie_plans FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- 3. plan_comments テーブル
@@ -151,10 +197,10 @@ CREATE TRIGGER plan_comments_updated_at
 -- RLS ポリシー: plan_comments
 ALTER TABLE plan_comments ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全コメントを閲覧可能
-CREATE POLICY "Authenticated users can view all comments"
+-- 全ユーザーは全コメントを閲覧可能
+CREATE POLICY "Public users can view all comments"
   ON plan_comments FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 認証済みユーザーはコメント作成可能
@@ -170,11 +216,39 @@ CREATE POLICY "Users can update own comments"
   USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
+-- 管理者は全コメントを編集可能
+CREATE POLICY "Admins can update all comments"
+  ON plan_comments FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
+
 -- 自分のコメントのみ削除可能
 CREATE POLICY "Users can delete own comments"
   ON plan_comments FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全コメントを削除可能
+CREATE POLICY "Admins can delete all comments"
+  ON plan_comments FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- 4. reactions テーブル
@@ -196,10 +270,10 @@ CREATE INDEX reactions_user_id_idx ON reactions(user_id);
 -- RLS ポリシー: reactions
 ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全リアクションを閲覧可能
-CREATE POLICY "Authenticated users can view all reactions"
+-- 全ユーザーは全リアクションを閲覧可能
+CREATE POLICY "Public users can view all reactions"
   ON reactions FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 認証済みユーザーはリアクション作成可能
@@ -213,6 +287,17 @@ CREATE POLICY "Users can delete own reactions"
   ON reactions FOR DELETE
   TO authenticated
   USING (auth.uid() = user_id);
+
+-- 管理者は全リアクションを削除可能
+CREATE POLICY "Admins can delete all reactions"
+  ON reactions FOR DELETE
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid() AND p.is_admin = true
+    )
+  );
 
 -- ===========================================
 -- ビュー: 投稿詳細（リアクション数・コメント数含む）

@@ -13,6 +13,7 @@ import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
 import { ExpectationLevel } from '@/types/database.types'
+import { getIsAdmin } from '@/lib/admin'
 
 interface MoviePlanWithProfile {
   id: string
@@ -53,10 +54,7 @@ export default async function PlanDetailPage({
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
+  const isAdmin = user ? await getIsAdmin(supabase, user.id) : false
 
   const { id } = await params
 
@@ -95,14 +93,17 @@ export default async function PlanDetailPage({
   const comments = (commentsData as CommentWithProfile[] | null) || []
 
   // リアクション状態を取得
-  const { data: reactionData } = await supabase
-    .from('reactions')
-    .select('id')
-    .eq('plan_id', id)
-    .eq('user_id', user.id)
-    .maybeSingle()
+  let reaction: { id: string } | null = null
+  if (user) {
+    const { data: reactionData } = await supabase
+      .from('reactions')
+      .select('id')
+      .eq('plan_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle()
 
-  const reaction = reactionData as { id: string } | null
+    reaction = reactionData as { id: string } | null
+  }
 
   const { count: reactionCount } = await supabase
     .from('reactions')
@@ -135,7 +136,7 @@ export default async function PlanDetailPage({
                   <h1 className="text-2xl font-bold text-white">{plan.title}</h1>
                   <ExpectationBadge expectation={plan.expectation} />
                 </div>
-                {plan.user_id === user.id && (
+                {user && (plan.user_id === user.id || isAdmin) && (
                   <form action={handleDeletePlan}>
                     <Button variant="outline" className="w-fit border-red-500 text-red-400 hover:bg-red-500/10">
                       この投稿を削除
@@ -190,7 +191,9 @@ export default async function PlanDetailPage({
           {/* クライアントコンポーネント（リアクション・コメント） */}
           <PlanDetailClient
             planId={id}
-            currentUserId={user.id}
+            currentUserId={user?.id}
+            isAdmin={isAdmin}
+            isLoggedIn={!!user}
             initialReacted={!!reaction}
             initialReactionCount={reactionCount || 0}
             comments={comments}

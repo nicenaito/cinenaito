@@ -17,7 +17,7 @@ export default async function NewPlanPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    redirect('/login?next=/new')
   }
 
   return (
