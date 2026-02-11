@@ -28,7 +28,7 @@ export async function Header() {
           <span className="font-bold text-xl">CineNaito</span>
         </Link>
 
-        {user && (
+        {user ? (
           <div className="flex items-center gap-4">
             {profile?.is_admin && (
               <Link href="/admin/users">
@@ -62,6 +62,19 @@ export async function Header() {
                 <LogOut className="w-4 h-4" />
               </Button>
             </form>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Link href="/login">
+              <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+                ログイン
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                新規登録
+              </Button>
+            </Link>
           </div>
         )}
       </div>

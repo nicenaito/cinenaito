@@ -10,6 +10,8 @@ interface ReactionButtonProps {
   initialCount: number
   initialReacted: boolean
   onReaction: (planId: string) => Promise<{ success: boolean; reacted: boolean }>
+  isLoggedIn: boolean
+  onRequireLogin: () => void
 }
 
 export function ReactionButton({
@@ -17,12 +19,18 @@ export function ReactionButton({
   initialCount,
   initialReacted,
   onReaction,
+  isLoggedIn,
+  onRequireLogin,
 }: ReactionButtonProps) {
   const [count, setCount] = useState(initialCount)
   const [reacted, setReacted] = useState(initialReacted)
   const [isPending, startTransition] = useTransition()
 
   const handleClick = () => {
+    if (!isLoggedIn) {
+      onRequireLogin()
+      return
+    }
     // 楽観的更新
     const newReacted = !reacted
     const newCount = newReacted ? count + 1 : count - 1

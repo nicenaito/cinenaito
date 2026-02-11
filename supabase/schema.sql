@@ -40,10 +40,10 @@ CREATE TRIGGER profiles_updated_at
 -- RLS ポリシー: profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全プロフィールを閲覧可能
-CREATE POLICY "Authenticated users can view all profiles"
+-- 全ユーザーは全プロフィールを閲覧可能
+CREATE POLICY "Public users can view all profiles"
   ON profiles FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 自分のプロフィールのみ編集可能
@@ -119,10 +119,10 @@ CREATE TRIGGER movie_plans_updated_at
 -- RLS ポリシー: movie_plans
 ALTER TABLE movie_plans ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全投稿を閲覧可能
-CREATE POLICY "Authenticated users can view all movie plans"
+-- 全ユーザーは全投稿を閲覧可能
+CREATE POLICY "Public users can view all movie plans"
   ON movie_plans FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 自分の投稿のみ作成可能
@@ -197,10 +197,10 @@ CREATE TRIGGER plan_comments_updated_at
 -- RLS ポリシー: plan_comments
 ALTER TABLE plan_comments ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全コメントを閲覧可能
-CREATE POLICY "Authenticated users can view all comments"
+-- 全ユーザーは全コメントを閲覧可能
+CREATE POLICY "Public users can view all comments"
   ON plan_comments FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 認証済みユーザーはコメント作成可能
@@ -270,10 +270,10 @@ CREATE INDEX reactions_user_id_idx ON reactions(user_id);
 -- RLS ポリシー: reactions
 ALTER TABLE reactions ENABLE ROW LEVEL SECURITY;
 
--- 認証済みユーザーは全リアクションを閲覧可能
-CREATE POLICY "Authenticated users can view all reactions"
+-- 全ユーザーは全リアクションを閲覧可能
+CREATE POLICY "Public users can view all reactions"
   ON reactions FOR SELECT
-  TO authenticated
+  TO anon, authenticated
   USING (true);
 
 -- 認証済みユーザーはリアクション作成可能

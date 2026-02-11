@@ -2,28 +2,73 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { headers } from 'next/headers'
-
-export async function signInWithDiscord() {
-  const supabase = await createClient()
-  const headersList = await headers()
-  const origin = headersList.get('origin') || headersList.get('x-forwarded-host') || 'http://localhost:3000'
-  
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'discord',
-    options: {
-      redirectTo: `${origin}/auth/callback`,
-      scopes: 'identify email',
-    },
-  })
-
-  if (error) {
-    console.error('Discord認証エラー:', error)
-    redirect('/login?error=auth_error')
+function resolveNextPath(nextPath?: string | null) {
+  if (!nextPath) return '/dashboard'
+  if (nextPath.startsWith('/') && !nextPath.startsWith('//')) {
+    return nextPath
   }
+  return '/dashboard'
+}
 
-  if (data.url) {
-    redirect(data.url)
+export async function signInWithPassword(
+  email: string,
+  password: string,
+  nextPath?: string | null
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  try {
+    // メールアドレスとパスワードでログイン
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      console.error('ログインエラー:', signInError)
+      return { success: false, error: 'メールアドレスまたはパスワードが違います' }
+    }
+
+    if (!data.user) {
+      return { success: false, error: 'ログインに失敗しました' }
+    }
+
+    // 次のページへリダイレクト
+    redirect(resolveNextPath(nextPath))
+  } catch (err) {
+    console.error('認証エラー:', err)
+    return { success: false, error: 'ログインに失敗しました' }
+  }
+}
+
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+  username: string
+): Promise<{ success: boolean; needsEmailConfirmation?: boolean; error?: string }> {
+  const supabase = await createClient()
+
+  try {
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: username,
+        },
+      },
+    })
+
+    if (signUpError) {
+      console.error('サインアップエラー:', signUpError)
+      return { success: false, error: '新規登録に失敗しました' }
+    }
+
+    const needsEmailConfirmation = !data.session
+    return { success: true, needsEmailConfirmation }
+  } catch (err) {
+    console.error('サインアップエラー:', err)
+    return { success: false, error: '新規登録に失敗しました' }
   }
 }
 

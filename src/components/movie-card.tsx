@@ -15,8 +15,10 @@ interface MovieCardProps {
   plan: MoviePlanWithStats
   currentUserId?: string
   isAdmin?: boolean
+  isLoggedIn: boolean
   userReacted: boolean
   onReaction: (planId: string) => Promise<{ success: boolean; reacted: boolean }>
+  onRequireLogin: () => void
   onDelete?: (planId: string) => Promise<void>
 }
 
@@ -24,8 +26,10 @@ export function MovieCard({
   plan,
   currentUserId,
   isAdmin = false,
+  isLoggedIn,
   userReacted,
   onReaction,
+  onRequireLogin,
   onDelete,
 }: MovieCardProps) {
   const isOwner = currentUserId === plan.user_id
@@ -110,6 +114,8 @@ export function MovieCard({
             initialCount={plan.reaction_count}
             initialReacted={userReacted}
             onReaction={onReaction}
+            isLoggedIn={isLoggedIn}
+            onRequireLogin={onRequireLogin}
           />
 
           {/* コメント数 */}

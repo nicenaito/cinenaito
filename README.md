@@ -4,7 +4,7 @@
 
 ## 主な機能
 
-- **Discord認証**: Discord SSOでログイン
+- **ログイン**: メールアドレスとパスワードで認証
 - **映画予定投稿**: タイトル、映画.com URL、YouTube予告編URL、コメントを登録
 - **期待度バッジ**: 「絶対観る」「時間が合えば」「気にはなっている」
 - **月別フィルタ**: 対象月で一覧を絞り込み
@@ -39,15 +39,14 @@ npm run dev
 
 1. Supabase Dashboard でプロジェクト作成
 2. SQL Editor で [supabase/schema.sql](supabase/schema.sql) を実行
-3. Authentication > Providers で Discord を有効化
-4. Project Settings から URL と anon key を取得
+3. Project Settings から URL と anon key を取得
 
-### 2) Discord OAuth
+### 2) ユーザー認証
 
-1. Discord Developer Portal でアプリ作成
-2. OAuth2 で Client ID / Secret を取得
-3. Redirects に `https://YOUR_PROJECT_ID.supabase.co/auth/v1/callback` を追加
-4. Supabase 側で Discord Provider に Client ID / Secret を設定
+1. Supabase でユーザーを作成
+2. 管理者にする場合は `profiles` テーブルで `is_admin` を `true` に設定
+3. ログイン画面でメールアドレスとパスワードを入力
+4. 投稿・リアクションはログイン後に利用可能（管理画面は管理者のみ）
 
 ### 3) Vercel デプロイ
 
@@ -76,7 +75,7 @@ WHERE id = 'YOUR_USER_ID';
 
 | テーブル | 説明 |
 | --- | --- |
-| profiles | ユーザープロフィール（Discord連携） |
+| profiles | ユーザープロフィール（管理者情報） |
 | movie_plans | 映画鑑賞予定（メイン投稿） |
 | plan_comments | 投稿へのコメント |
 | reactions | 「自分も観る」リアクション |

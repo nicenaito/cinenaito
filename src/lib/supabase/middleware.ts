@@ -35,7 +35,7 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   // 未認証ユーザーを保護されたルートからリダイレクト
-  const protectedRoutes = ['/dashboard', '/new', '/profile', '/admin']
+  const protectedRoutes = ['/new', '/profile', '/admin']
   const isProtectedRoute = protectedRoutes.some((route) =>
     request.nextUrl.pathname.startsWith(route)
   )
@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   // ログイン済みユーザーをログインページからリダイレクト
-  if (request.nextUrl.pathname === '/login' && user) {
+  if ((request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup') && user) {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)
