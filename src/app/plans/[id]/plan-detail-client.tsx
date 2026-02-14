@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toggleReaction, addComment, deleteComment } from '@/app/actions'
@@ -51,6 +51,11 @@ export function PlanDetailClient({
   const [newComment, setNewComment] = useState('')
   const [isPending, startTransition] = useTransition()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // サーバーから最新データが渡されたら同期
+  useEffect(() => {
+    setComments(initialComments)
+  }, [initialComments])
 
   const handleRequireLogin = () => {
     toast.error('ログインが必要です')
@@ -103,6 +108,8 @@ export function PlanDetailClient({
       if (result.success) {
         setNewComment('')
         toast.success('コメントを投稿しました')
+        // サーバーから最新のコメント一覧を再取得
+        router.refresh()
       } else {
         setComments((prev) => prev.filter((c) => c.id !== tempId))
         toast.error(result.error)
@@ -136,20 +143,20 @@ export function PlanDetailClient({
           onClick={handleReaction}
           disabled={isPending}
           className={cn(
-            'gap-2 transition-colors',
+            'gap-2 transition-all duration-200',
             reacted
-              ? 'border-orange-500 text-orange-400 hover:bg-orange-500/10'
-              : 'border-slate-600 text-slate-400 hover:text-slate-300'
+              ? 'border-cinema-gold/50 text-cinema-gold hover:bg-cinema-gold/10'
+              : 'border-white/10 text-slate-400 hover:text-cinema-gold-light hover:border-cinema-gold/30'
           )}
         >
-          <Popcorn className={cn('w-5 h-5', reacted && 'fill-current')} />
+          <Popcorn className={cn('w-5 h-5 transition-transform', reacted && 'fill-current scale-110')} />
           自分も観る
           {reactionCount > 0 && <span>({reactionCount})</span>}
         </Button>
       </div>
 
       {/* コメントセクション */}
-      <Card className="bg-slate-800/50 border-slate-700">
+      <Card className="glass-card border-white/10">
         <CardHeader>
           <CardTitle className="text-white text-lg">
             コメント ({comments.length})
@@ -161,9 +168,9 @@ export function PlanDetailClient({
             <div className="space-y-4">
               {comments.map((comment) => (
                 <div key={comment.id} className="flex gap-3">
-                  <Avatar className="w-8 h-8 flex-shrink-0">
+                  <Avatar className="w-8 h-8 flex-shrink-0 ring-1 ring-cinema-gold/15">
                     <AvatarImage src={comment.profiles?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-purple-600 text-white text-xs">
+                    <AvatarFallback className="bg-cinema-gold/15 text-cinema-gold text-xs font-medium">
                       {(comment.profiles?.username || 'U').charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -180,13 +187,13 @@ export function PlanDetailClient({
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteComment(comment.id)}
-                          className="ml-auto text-slate-500 hover:text-red-400 p-1 h-auto"
+                          className="ml-auto text-slate-500 hover:text-red-400 p-1 h-auto transition-colors"
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
                       )}
                     </div>
-                    <p className="text-slate-300 text-sm mt-1 whitespace-pre-wrap">
+                    <p className="text-slate-300 text-sm mt-1 whitespace-pre-wrap leading-relaxed">
                       {comment.content}
                     </p>
                   </div>
@@ -200,18 +207,18 @@ export function PlanDetailClient({
           )}
 
           {/* コメント入力 */}
-          <div className="flex gap-3 pt-4 border-t border-slate-700">
+          <div className="flex gap-3 pt-4 border-t border-white/5">
             <Textarea
               placeholder="コメントを入力..."
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
-              className="bg-slate-900 border-slate-600 text-white min-h-[80px]"
+              className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 min-h-[80px]"
               disabled={!isLoggedIn}
             />
             <Button
               onClick={handleSubmitComment}
               disabled={isSubmitting || !newComment.trim() || !isLoggedIn}
-              className="bg-purple-600 hover:bg-purple-700 self-end"
+              className="btn-cinema self-end rounded-lg"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -223,7 +230,7 @@ export function PlanDetailClient({
           {!isLoggedIn && (
             <p className="text-sm text-slate-400">
               コメントやリアクションには{' '}
-              <Link href={`/login?next=${encodeURIComponent(pathname || `/plans/${planId}`)}`} className="text-purple-400 hover:text-purple-300">
+              <Link href={`/login?next=${encodeURIComponent(pathname || `/plans/${planId}`)}`} className="text-cinema-gold hover:text-cinema-gold-light transition-colors">
                 ログイン
               </Link>
               が必要です。

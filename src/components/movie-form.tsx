@@ -93,10 +93,10 @@ export function MovieForm({
   const currentReleaseDate = form.watch('release_date')
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
+    <Card className="glass-card border-white/10">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
-          <Film className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-cinema-gradient">
+          <Film className="w-5 h-5 text-cinema-gold" />
           {title}
         </CardTitle>
       </CardHeader>
@@ -116,7 +116,7 @@ export function MovieForm({
                     <FormControl>
                       <Input
                         placeholder="https://eiga.com/movie/..."
-                        className="bg-slate-900 border-slate-600 text-white"
+                        className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50"
                         {...field}
                       />
                     </FormControl>
@@ -125,7 +125,7 @@ export function MovieForm({
                       variant="secondary"
                       onClick={handleFetchMovieInfo}
                       disabled={isFetchingInfo}
-                      className="sm:w-auto"
+                      className="sm:w-auto bg-white/10 hover:bg-cinema-gold/20 border-white/10 text-slate-200 hover:text-cinema-gold-light transition-all"
                     >
                       {isFetchingInfo ? (
                         <>
@@ -140,7 +140,7 @@ export function MovieForm({
                       )}
                     </Button>
                   </div>
-                  <FormDescription className="text-slate-400">
+                  <FormDescription className="text-slate-500">
                     まず映画.comの作品ページURLを入力し、「情報を取得」を押してください。
                   </FormDescription>
                   <FormMessage />
@@ -149,8 +149,8 @@ export function MovieForm({
             />
 
             {(currentTitle || currentReleaseDate) && (
-              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-2">
-                <p className="text-xs text-slate-400">取得結果</p>
+              <div className="rounded-lg border border-cinema-gold/20 bg-cinema-gold/5 p-4 space-y-2">
+                <p className="text-xs text-cinema-gold font-medium">取得結果</p>
                 {currentTitle && <p className="text-sm text-slate-100">タイトル: {currentTitle}</p>}
                 {currentReleaseDate && (
                   <p className="text-sm text-slate-100">公開日: {currentReleaseDate}</p>
@@ -168,11 +168,11 @@ export function MovieForm({
                   <FormControl>
                     <Input
                       placeholder="URLから自動取得されます（必要なら編集可）"
-                      className="bg-slate-900 border-slate-600 text-white"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription className="text-slate-400">
+                  <FormDescription className="text-slate-500">
                     情報取得に失敗した場合は手入力できます
                   </FormDescription>
                   <FormMessage />
@@ -189,16 +189,16 @@ export function MovieForm({
                   <FormLabel className="text-slate-200">鑑賞予定月 *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="月を選択" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-800 border-slate-600">
+                    <SelectContent className="glass-card border-white/10">
                       {monthOptions.map((option) => (
                         <SelectItem
                           key={option.value}
                           value={option.value}
-                          className="text-white hover:bg-slate-700"
+                          className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white"
                         >
                           {option.label}
                         </SelectItem>
@@ -219,18 +219,18 @@ export function MovieForm({
                   <FormLabel className="text-slate-200">期待度 *</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="期待度を選択" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      <SelectItem value="絶対観る" className="text-white hover:bg-slate-700">
+                    <SelectContent className="glass-card border-white/10">
+                      <SelectItem value="絶対観る" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
                         🔥 絶対観る
                       </SelectItem>
-                      <SelectItem value="時間が合えば" className="text-white hover:bg-slate-700">
+                      <SelectItem value="時間が合えば" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
                         ⏰ 時間が合えば
                       </SelectItem>
-                      <SelectItem value="気にはなっている" className="text-white hover:bg-slate-700">
+                      <SelectItem value="気にはなっている" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
                         👀 気にはなっている
                       </SelectItem>
                     </SelectContent>
@@ -250,11 +250,11 @@ export function MovieForm({
                   <FormControl>
                     <Input
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="bg-slate-900 border-slate-600 text-white"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription className="text-slate-400">
+                  <FormDescription className="text-slate-500">
                     予告編の埋め込み表示に使用されます
                   </FormDescription>
                   <FormMessage />
@@ -272,7 +272,7 @@ export function MovieForm({
                   <FormControl>
                     <Textarea
                       placeholder="期待ポイントや一緒に観たい人など..."
-                      className="bg-slate-900 border-slate-600 text-white min-h-[100px]"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 min-h-[100px]"
                       {...field}
                     />
                   </FormControl>
@@ -285,7 +285,7 @@ export function MovieForm({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-purple-600 hover:bg-purple-700"
+              className="w-full btn-cinema rounded-lg"
             >
               {isSubmitting ? (
                 <>

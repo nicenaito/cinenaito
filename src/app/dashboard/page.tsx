@@ -4,6 +4,7 @@ import { Header } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
 import { getIsAdmin } from '@/lib/admin'
 import { getCurrentMonth, isValidYearMonth } from '@/lib/helpers'
+import { MoviePlanWithStats } from '@/types/database.types'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
@@ -25,19 +26,30 @@ export default async function DashboardPage({
     ? monthParam
     : getCurrentMonth()
 
-  // 映画予定を取得
-  let query = supabase
-    .from('movie_plans_with_stats')
-    .select('*')
-    .order('reaction_count', { ascending: false })
-    .order('created_at', { ascending: false })
+  // 映画予定を取得（release_month が未反映な環境ではフォールバック）
+  let plans: MoviePlanWithStats[] = []
+  const baseQuery = () =>
+    supabase
+      .from('movie_plans_with_stats')
+      .select('*')
+      .order('reaction_count', { ascending: false })
+      .order('created_at', { ascending: false })
 
-  query = query.or(`release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`)
+  const filteredResult = await baseQuery().or(
+    `release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`
+  )
 
-  const { data: plans, error } = await query
-
-  if (error) {
-    console.error('データ取得エラー:', error)
+  if (filteredResult.error) {
+    console.error('データ取得エラー（release_month フィルタ）:', filteredResult.error)
+    const fallbackResult = await baseQuery().eq('target_month', selectedMonth)
+    if (fallbackResult.error) {
+      console.error('データ取得エラー（fallback）:', fallbackResult.error)
+      plans = []
+    } else {
+      plans = (fallbackResult.data as MoviePlanWithStats[] | null) || []
+    }
+  } else {
+    plans = (filteredResult.data as MoviePlanWithStats[] | null) || []
   }
 
   // ユーザーのリアクション状態を取得
@@ -53,11 +65,11 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
+    <div className="min-h-screen cinema-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <DashboardClient
-          plans={plans || []}
+          plans={plans}
           selectedMonth={selectedMonth}
           currentUserId={user?.id}
           isAdmin={isAdmin}

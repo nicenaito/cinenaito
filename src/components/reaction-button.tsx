@@ -60,15 +60,18 @@ export function ReactionButton({
       onClick={handleClick}
       disabled={isPending}
       className={cn(
-        'gap-2 transition-colors',
+        'gap-2 transition-all duration-200',
         reacted
-          ? 'text-orange-400 hover:text-orange-300'
-          : 'text-slate-400 hover:text-slate-300'
+          ? 'text-cinema-gold hover:text-cinema-gold-light scale-100'
+          : 'text-slate-400 hover:text-cinema-gold-light'
       )}
     >
-      <Popcorn className={cn('w-4 h-4', reacted && 'fill-current')} />
+      <Popcorn className={cn(
+        'w-4 h-4 transition-transform duration-200',
+        reacted && 'fill-current scale-110'
+      )} />
       <span>自分も観る</span>
-      {count > 0 && <span className="ml-1">({count})</span>}
+      {count > 0 && <span className={cn('ml-0.5', reacted ? 'text-cinema-gold' : 'text-slate-500')}>({count})</span>}
     </Button>
   )
 }

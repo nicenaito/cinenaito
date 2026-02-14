@@ -9,7 +9,7 @@ import { ReactionButton } from '@/components/reaction-button'
 import { EigaEmbedCard } from '@/components/eiga-embed-card'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
-import { MessageCircle, ExternalLink, Trash2, Pencil } from 'lucide-react'
+import { MessageCircle, Trash2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 
 interface MovieCardProps {
@@ -21,6 +21,7 @@ interface MovieCardProps {
   onReaction: (planId: string) => Promise<{ success: boolean; reacted: boolean }>
   onRequireLogin: () => void
   onDelete?: (planId: string) => Promise<void>
+  index?: number
 }
 
 export function MovieCard({
@@ -32,6 +33,7 @@ export function MovieCard({
   onReaction,
   onRequireLogin,
   onDelete,
+  index = 0,
 }: MovieCardProps) {
   const isOwner = currentUserId === plan.user_id
   const canEdit = isOwner
@@ -44,7 +46,10 @@ export function MovieCard({
   }
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
+    <Card
+      className="glass-card glass-card-hover overflow-hidden animate-fade-in-up"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
       {/* YouTube埋め込み */}
       {plan.youtube_url && (
         <div className="p-4 pb-0">
@@ -74,7 +79,7 @@ export function MovieCard({
       <CardContent className="space-y-4">
         {/* コメント */}
         {plan.comment && (
-          <p className="text-slate-300 text-sm whitespace-pre-wrap">
+          <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">
             {plan.comment}
           </p>
         )}
@@ -83,24 +88,11 @@ export function MovieCard({
           <EigaEmbedCard movieUrl={plan.movie_url} title={plan.title} />
         )}
 
-        {/* 映画.com リンク */}
-        {plan.movie_url && (
-          <a
-            href={plan.movie_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3" />
-            映画.comで詳細を見る
-          </a>
-        )}
-
         {/* 投稿者情報 */}
-        <div className="flex items-center gap-3 pt-2 border-t border-slate-700">
-          <Avatar className="w-8 h-8">
+        <div className="flex items-center gap-3 pt-3 border-t border-white/5">
+          <Avatar className="w-8 h-8 ring-1 ring-cinema-gold/15">
             <AvatarImage src={plan.avatar_url || undefined} />
-            <AvatarFallback className="bg-purple-600 text-white text-xs">
+            <AvatarFallback className="bg-cinema-gold/15 text-cinema-gold text-xs font-medium">
               {plan.username?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -115,8 +107,8 @@ export function MovieCard({
         </div>
       </CardContent>
 
-      <CardFooter className="border-t border-slate-700 pt-4">
-        <div className="flex items-center gap-4 w-full">
+      <CardFooter className="border-t border-white/5 pt-4">
+        <div className="flex items-center gap-3 w-full">
           {/* リアクションボタン */}
           <ReactionButton
             planId={plan.id}
@@ -129,18 +121,18 @@ export function MovieCard({
 
           {/* コメント数 */}
           <Link href={`/plans/${plan.id}`}>
-            <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300">
+            <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-cinema-gold-light transition-colors">
               <MessageCircle className="w-4 h-4" />
               <span>コメント</span>
-              {plan.comment_count > 0 && <span>({plan.comment_count})</span>}
+              {plan.comment_count > 0 && <span className="text-cinema-gold/70">({plan.comment_count})</span>}
             </Button>
           </Link>
 
           {canEdit && (
             <Link href={`/plans/${plan.id}/edit`}>
-              <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300">
+              <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300 transition-colors">
                 <Pencil className="w-4 h-4" />
-                <span>編集</span>
+                <span className="hidden sm:inline">編集</span>
               </Button>
             </Link>
           )}
@@ -150,7 +142,7 @@ export function MovieCard({
               variant="ghost"
               size="sm"
               onClick={handleDelete}
-              className="ml-auto text-red-400 hover:text-red-300"
+              className="ml-auto text-red-400/70 hover:text-red-400 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </Button>
