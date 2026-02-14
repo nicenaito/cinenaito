@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
 import { getIsAdmin } from '@/lib/admin'
+import { getCurrentMonth } from '@/lib/helpers'
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
@@ -19,17 +20,14 @@ export default async function DashboardPage({
   const isAdmin = user ? await getIsAdmin(supabase, user.id) : false
 
   const params = await searchParams
-  const selectedMonth = params.month || 'all'
+  const selectedMonth = params.month || getCurrentMonth()
 
   // 映画予定を取得
-  let query = supabase
+  const query = supabase
     .from('movie_plans_with_stats')
     .select('*')
+    .order('reaction_count', { ascending: false })
     .order('created_at', { ascending: false })
-
-  if (selectedMonth !== 'all') {
-    query = query.eq('target_month', selectedMonth)
-  }
 
   const { data: plans, error } = await query
 

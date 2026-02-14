@@ -6,9 +6,10 @@ import { Button } from '@/components/ui/button'
 import { YouTubeEmbed } from '@/components/youtube-embed'
 import { ExpectationBadge } from '@/components/expectation-badge'
 import { ReactionButton } from '@/components/reaction-button'
+import { EigaEmbedCard } from '@/components/eiga-embed-card'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
-import { MessageCircle, ExternalLink, Trash2 } from 'lucide-react'
+import { MessageCircle, ExternalLink, Trash2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 
 interface MovieCardProps {
@@ -33,6 +34,7 @@ export function MovieCard({
   onDelete,
 }: MovieCardProps) {
   const isOwner = currentUserId === plan.user_id
+  const canEdit = isOwner
   const canDelete = isOwner || isAdmin
 
   const handleDelete = async () => {
@@ -75,6 +77,10 @@ export function MovieCard({
           <p className="text-slate-300 text-sm whitespace-pre-wrap">
             {plan.comment}
           </p>
+        )}
+
+        {plan.movie_url && (
+          <EigaEmbedCard movieUrl={plan.movie_url} title={plan.title} />
         )}
 
         {/* 映画.com リンク */}
@@ -129,6 +135,15 @@ export function MovieCard({
               {plan.comment_count > 0 && <span>({plan.comment_count})</span>}
             </Button>
           </Link>
+
+          {canEdit && (
+            <Link href={`/plans/${plan.id}/edit`}>
+              <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300">
+                <Pencil className="w-4 h-4" />
+                <span>編集</span>
+              </Button>
+            </Link>
+          )}
 
           {canDelete && onDelete && (
             <Button
