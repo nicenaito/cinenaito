@@ -8,7 +8,7 @@ import { ExpectationBadge } from '@/components/expectation-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
@@ -138,11 +138,19 @@ export default async function PlanDetailPage({
                   <ExpectationBadge expectation={plan.expectation} />
                 </div>
                 {user && (plan.user_id === user.id || isAdmin) && (
-                  <form action={handleDeletePlan}>
-                    <Button variant="outline" className="w-fit border-red-500 text-red-400 hover:bg-red-500/10">
-                      この投稿を削除
-                    </Button>
-                  </form>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/plans/${id}/edit`}>
+                      <Button variant="outline" className="w-fit border-slate-600 text-slate-200 hover:bg-slate-700/40">
+                        <Pencil className="w-4 h-4 mr-2" />
+                        この投稿を編集
+                      </Button>
+                    </Link>
+                    <form action={handleDeletePlan}>
+                      <Button variant="outline" className="w-fit border-red-500 text-red-400 hover:bg-red-500/10">
+                        この投稿を削除
+                      </Button>
+                    </form>
+                  </div>
                 )}
                 <p className="text-slate-400 text-sm">
                   {formatMonth(plan.target_month)} の鑑賞予定

@@ -82,3 +82,20 @@ export function formatRelativeTime(dateString: string): string {
     day: 'numeric',
   })
 }
+
+export function extractYearMonthFromReleaseDate(releaseDate: string | null): string | null {
+  if (!releaseDate) return null
+
+  const isoMatch = releaseDate.match(/^(\d{4})-(\d{2})-\d{2}$/)
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}`
+  }
+
+  const jpMatch = releaseDate.match(/(\d{4})年\s*(\d{1,2})月\s*\d{1,2}日/)
+  if (jpMatch) {
+    const month = jpMatch[2].padStart(2, '0')
+    return `${jpMatch[1]}-${month}`
+  }
+
+  return null
+}

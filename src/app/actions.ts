@@ -7,6 +7,7 @@ import { Database } from '@/types/database.types'
 import { getIsAdmin } from '@/lib/admin'
 
 type MoviePlanInsert = Database['public']['Tables']['movie_plans']['Insert']
+type MoviePlanUpdate = Database['public']['Tables']['movie_plans']['Update']
 type ReactionInsert = Database['public']['Tables']['reactions']['Insert']
 type CommentInsert = Database['public']['Tables']['plan_comments']['Insert']
 
@@ -66,6 +67,45 @@ function extractReleaseDate(html: string) {
   return null
 }
 
+function extractDescription(html: string) {
+  return (
+    extractMetaContent(html, 'og:description') ||
+    extractMetaContent(html, 'twitter:description') ||
+    extractMetaContent(html, 'description')
+  )
+}
+
+function extractImageUrl(html: string, pageUrl: string) {
+  const rawImage =
+    extractMetaContent(html, 'og:image') ||
+    extractMetaContent(html, 'twitter:image')
+
+  if (!rawImage) return null
+
+  try {
+    return new URL(rawImage, pageUrl).toString()
+  } catch {
+    return null
+  }
+}
+
+async function fetchEigaHtml(movieUrl: string) {
+  const response = await fetch(movieUrl, {
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    return { success: false as const, error: '映画.comから情報を取得できませんでした' }
+  }
+
+  const html = await response.text()
+  return { success: true as const, html }
+}
+
 export async function fetchMovieInfoFromEiga(movieUrl: string) {
   if (!isValidEigaUrl(movieUrl)) {
     return {
@@ -75,19 +115,12 @@ export async function fetchMovieInfoFromEiga(movieUrl: string) {
   }
 
   try {
-    const response = await fetch(movieUrl, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return { success: false, error: '映画.comから情報を取得できませんでした' }
+    const fetched = await fetchEigaHtml(movieUrl)
+    if (!fetched.success) {
+      return fetched
     }
 
-    const html = await response.text()
+    const { html } = fetched
 
     const rawTitle =
       extractMetaContent(html, 'og:title') ||
@@ -121,6 +154,54 @@ export async function fetchMovieInfoFromEiga(movieUrl: string) {
   }
 }
 
+export async function fetchMoviePreviewFromEiga(movieUrl: string) {
+  if (!isValidEigaUrl(movieUrl)) {
+    return {
+      success: false,
+      error: '映画.comの作品ページURL（https://eiga.com/movie/...）を入力してください',
+    }
+  }
+
+  try {
+    const fetched = await fetchEigaHtml(movieUrl)
+    if (!fetched.success) {
+      return fetched
+    }
+
+    const { html } = fetched
+    const rawTitle =
+      extractMetaContent(html, 'og:title') ||
+      extractMetaContent(html, 'twitter:title') ||
+      html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim() ||
+      null
+
+    if (!rawTitle) {
+      return { success: false, error: 'タイトルを取得できませんでした' }
+    }
+
+    const title = rawTitle
+      .replace(/\s*[\-|｜|]\s*映画\.com.*$/i, '')
+      .replace(/\s*\(映画\.com\)\s*$/i, '')
+      .trim()
+
+    if (!title) {
+      return { success: false, error: 'タイトルを取得できませんでした' }
+    }
+
+    return {
+      success: true,
+      title,
+      releaseDate: extractReleaseDate(html),
+      description: extractDescription(html),
+      imageUrl: extractImageUrl(html, movieUrl),
+      movieUrl,
+    }
+  } catch (error) {
+    console.error('映画.comプレビュー取得エラー:', error)
+    return { success: false, error: '映画情報の取得に失敗しました' }
+  }
+}
+
 export async function createMoviePlan(data: MoviePlanFormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -148,6 +229,45 @@ export async function createMoviePlan(data: MoviePlanFormData) {
   }
 
   revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function updateMoviePlan(planId: string, data: MoviePlanFormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: '認証が必要です' }
+  }
+
+  const isAdmin = await getIsAdmin(supabase, user.id)
+  const updateData: MoviePlanUpdate = {
+    title: data.title,
+    release_date: data.release_date || null,
+    movie_url: data.movie_url || null,
+    youtube_url: data.youtube_url || null,
+    comment: data.comment || null,
+    expectation: data.expectation,
+    target_month: data.target_month,
+  }
+
+  const updateQuery = supabase
+    .from('movie_plans')
+    .update(updateData)
+    .eq('id', planId)
+
+  const { error } = isAdmin
+    ? await updateQuery
+    : await updateQuery.eq('user_id', user.id)
+
+  if (error) {
+    console.error('更新エラー:', error)
+    return { success: false, error: '更新に失敗しました' }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath(`/plans/${planId}`)
+  revalidatePath(`/plans/${planId}/edit`)
   return { success: true }
 }
 

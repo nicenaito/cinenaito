@@ -32,9 +32,17 @@ interface MovieFormProps {
   onSubmit: (data: MoviePlanFormData) => Promise<void>
   isSubmitting?: boolean
   defaultValues?: Partial<MoviePlanFormData>
+  title?: string
+  submitLabel?: string
 }
 
-export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormProps) {
+export function MovieForm({
+  onSubmit,
+  isSubmitting,
+  defaultValues,
+  title = '映画情報を登録',
+  submitLabel = '登録する',
+}: MovieFormProps) {
   const monthOptions = generateMonthOptions()
   const [isFetchingInfo, setIsFetchingInfo] = useState(false)
 
@@ -89,7 +97,7 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-white">
           <Film className="w-5 h-5" />
-          映画情報を登録
+          {title}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -285,7 +293,7 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
                   登録中...
                 </>
               ) : (
-                '登録する'
+                submitLabel
               )}
             </Button>
           </form>
