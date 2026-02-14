@@ -74,7 +74,7 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
       }
 
       form.clearErrors('movie_url')
-      form.setValue('title', result.title, { shouldDirty: true, shouldValidate: true })
+      form.setValue('title', result.title ?? '', { shouldDirty: true, shouldValidate: true })
       form.setValue('release_date', result.releaseDate ?? '', { shouldDirty: true })
     } finally {
       setIsFetchingInfo(false)
