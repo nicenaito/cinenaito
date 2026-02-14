@@ -19,15 +19,15 @@ export function MonthFilter({ value, onChange }: MonthFilterProps) {
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[180px] bg-slate-800 border-slate-600 text-white">
+      <SelectTrigger className="w-[180px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
         <SelectValue placeholder="公開年月を選択" />
       </SelectTrigger>
-      <SelectContent className="bg-slate-800 border-slate-600">
+      <SelectContent className="glass-card border-white/10">
         {monthOptions.map((option) => (
           <SelectItem
             key={option.value}
             value={option.value}
-            className="text-white hover:bg-slate-700"
+            className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white"
           >
             {option.label}
           </SelectItem>

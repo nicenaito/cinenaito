@@ -112,18 +112,18 @@ export default async function PlanDetailPage({
     .eq('plan_id', id)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
+    <div className="min-h-screen cinema-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <Link href="/dashboard">
-            <Button variant="ghost" className="mb-6 text-slate-400 hover:text-white">
+            <Button variant="ghost" className="mb-6 text-slate-400 hover:text-cinema-gold transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" />
               一覧に戻る
             </Button>
           </Link>
 
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className="glass-card border-white/10">
             {/* YouTube埋め込み */}
             {plan.youtube_url && (
               <div className="p-6 pb-0">
@@ -140,13 +140,13 @@ export default async function PlanDetailPage({
                 {user && (plan.user_id === user.id || isAdmin) && (
                   <div className="flex items-center gap-2">
                     <Link href={`/plans/${id}/edit`}>
-                      <Button variant="outline" className="w-fit border-slate-600 text-slate-200 hover:bg-slate-700/40">
+                      <Button variant="outline" className="w-fit border-white/10 text-slate-200 hover:border-cinema-gold/30 hover:text-cinema-gold-light transition-all">
                         <Pencil className="w-4 h-4 mr-2" />
                         この投稿を編集
                       </Button>
                     </Link>
                     <form action={handleDeletePlan}>
-                      <Button variant="outline" className="w-fit border-red-500 text-red-400 hover:bg-red-500/10">
+                      <Button variant="outline" className="w-fit border-red-500/30 text-red-400 hover:bg-red-500/10">
                         この投稿を削除
                       </Button>
                     </form>
@@ -164,7 +164,7 @@ export default async function PlanDetailPage({
             <CardContent className="space-y-6">
               {/* コメント */}
               {plan.comment && (
-                <p className="text-slate-300 whitespace-pre-wrap">{plan.comment}</p>
+                <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">{plan.comment}</p>
               )}
 
               {/* 映画.com リンク */}
@@ -173,7 +173,7 @@ export default async function PlanDetailPage({
                   href={plan.movie_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 transition-colors"
+                  className="inline-flex items-center gap-2 text-cinema-gold hover:text-cinema-gold-light transition-colors"
                 >
                   <ExternalLink className="w-4 h-4" />
                   映画.comで詳細を見る
@@ -181,10 +181,10 @@ export default async function PlanDetailPage({
               )}
 
               {/* 投稿者情報 */}
-              <div className="flex items-center gap-3 pt-4 border-t border-slate-700">
-                <Avatar className="w-10 h-10">
+              <div className="flex items-center gap-3 pt-4 border-t border-white/5">
+                <Avatar className="w-10 h-10 ring-2 ring-cinema-gold/15">
                   <AvatarImage src={plan.profiles?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-purple-600 text-white">
+                  <AvatarFallback className="bg-cinema-gold/15 text-cinema-gold font-medium">
                     {(plan.profiles?.username || 'U').charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>

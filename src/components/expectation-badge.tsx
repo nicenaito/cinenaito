@@ -8,23 +8,23 @@ interface ExpectationBadgeProps {
 const expectationConfig: Record<ExpectationLevel, { label: string; className: string }> = {
   '絶対観る': {
     label: '🔥 絶対観る',
-    className: 'bg-red-500/20 text-red-400 border-red-500/50 hover:bg-red-500/30',
+    className: 'bg-red-500/15 text-red-400 border-red-500/30 hover:bg-red-500/25 shadow-[0_0_10px_rgba(239,68,68,0.1)]',
   },
   '時間が合えば': {
     label: '⏰ 時間が合えば',
-    className: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50 hover:bg-yellow-500/30',
+    className: 'bg-amber-500/15 text-amber-400 border-amber-500/30 hover:bg-amber-500/25 shadow-[0_0_10px_rgba(245,158,11,0.1)]',
   },
   '気にはなっている': {
     label: '👀 気にはなっている',
-    className: 'bg-blue-500/20 text-blue-400 border-blue-500/50 hover:bg-blue-500/30',
+    className: 'bg-sky-500/15 text-sky-400 border-sky-500/30 hover:bg-sky-500/25 shadow-[0_0_10px_rgba(14,165,233,0.08)]',
   },
 }
 
 export function ExpectationBadge({ expectation }: ExpectationBadgeProps) {
   const config = expectationConfig[expectation]
-  
+
   return (
-    <Badge variant="outline" className={config.className}>
+    <Badge variant="outline" className={`${config.className} transition-all`}>
       {config.label}
     </Badge>
   )

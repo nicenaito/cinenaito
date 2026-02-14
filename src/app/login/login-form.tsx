@@ -41,24 +41,24 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Card className="w-full max-w-md mx-4">
+    <div className="min-h-screen flex items-center justify-center cinema-bg-auth">
+      <Card className="w-full max-w-md mx-4 glass-card border-white/10">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center">
-            <Film className="w-8 h-8 text-white" />
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-cinema-gold to-cinema-gold-dark shadow-[0_0_30px_rgba(212,168,83,0.2)]">
+            <Film className="w-8 h-8 text-cinema-deep" />
           </div>
-          <CardTitle className="text-2xl font-bold">CineNaito</CardTitle>
-          <CardDescription>ログイン</CardDescription>
+          <CardTitle className="text-2xl font-bold text-cinema-gradient">CineNaito</CardTitle>
+          <CardDescription className="text-slate-400">ログイン</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {message === 'check_email' && (
-            <div className="text-sm text-emerald-600 bg-emerald-50 p-3 rounded">
+            <div className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
               登録確認メールを送信しました。メール内のリンクを開いてからログインしてください。
             </div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">メールアドレス</Label>
+              <Label htmlFor="email" className="text-slate-300">メールアドレス</Label>
               <Input
                 id="email"
                 type="email"
@@ -67,10 +67,11 @@ export function LoginForm() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 focus:ring-cinema-gold/20"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">パスワード</Label>
+              <Label htmlFor="password" className="text-slate-300">パスワード</Label>
               <Input
                 id="password"
                 type="password"
@@ -79,16 +80,17 @@ export function LoginForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 focus:ring-cinema-gold/20"
               />
             </div>
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+              <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 p-3 rounded-lg">
                 {error}
               </div>
             )}
             <Button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              className="w-full btn-cinema rounded-lg"
               size="lg"
               disabled={isLoading}
             >
@@ -96,14 +98,14 @@ export function LoginForm() {
             </Button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-slate-400">
             ログインして投稿やリアクションができます。
           </p>
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-slate-400">
             アカウントをお持ちでない方は{' '}
             <Link
               href={nextPath ? `/signup?next=${encodeURIComponent(nextPath)}` : '/signup'}
-              className="text-purple-400 hover:text-purple-300"
+              className="text-cinema-gold hover:text-cinema-gold-light transition-colors"
             >
               新規登録
             </Link>

@@ -42,12 +42,12 @@ export default async function EditPlanPage({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900/20 to-slate-900">
+    <div className="min-h-screen cinema-bg">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <Link href={`/plans/${id}`}>
-            <Button variant="ghost" className="mb-6 text-slate-400 hover:text-white">
+            <Button variant="ghost" className="mb-6 text-slate-400 hover:text-cinema-gold transition-colors">
               <ArrowLeft className="w-4 h-4 mr-2" />
               投稿詳細に戻る
             </Button>
