@@ -9,7 +9,7 @@ import { ReactionButton } from '@/components/reaction-button'
 import { EigaEmbedCard } from '@/components/eiga-embed-card'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
-import { MessageCircle, ExternalLink, Trash2, Pencil } from 'lucide-react'
+import { MessageCircle, Trash2, Pencil } from 'lucide-react'
 import Link from 'next/link'
 
 interface MovieCardProps {
@@ -81,19 +81,6 @@ export function MovieCard({
 
         {plan.movie_url && (
           <EigaEmbedCard movieUrl={plan.movie_url} title={plan.title} />
-        )}
-
-        {/* 映画.com リンク */}
-        {plan.movie_url && (
-          <a
-            href={plan.movie_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-sm text-purple-400 hover:text-purple-300 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3" />
-            映画.comで詳細を見る
-          </a>
         )}
 
         {/* 投稿者情報 */}

@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { MoviePlanFormData } from '@/lib/validations'
+import { MoviePlanFormData, commentSchema } from '@/lib/validations'
 import { Database } from '@/types/database.types'
 import { getIsAdmin } from '@/lib/admin'
 import { extractYearMonthFromReleaseDate } from '@/lib/helpers'
@@ -30,6 +30,18 @@ function decodeHtmlEntities(text: string) {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .trim()
+}
+
+function normalizeEigaMovieTitle(rawTitle: string) {
+  return rawTitle
+    .replace(/^\s*タイトル\s*[：:]\s*/i, '')
+    .replace(/\s*[\-|｜|]\s*映画\.com.*$/i, '')
+    .replace(/\s*\(映画\.com\)\s*$/i, '')
+    .replace(/\s*[：:]\s*作品情報.*$/i, '')
+    .replace(/\s*[：:]\s*キャスト.*$/i, '')
+    .replace(/\s*[：:]\s*あらすじ.*$/i, '')
+    .replace(/\s*[：:]\s*動画.*$/i, '')
     .trim()
 }
 
@@ -133,10 +145,7 @@ export async function fetchMovieInfoFromEiga(movieUrl: string) {
       return { success: false, error: 'タイトルを取得できませんでした' }
     }
 
-    const title = rawTitle
-      .replace(/\s*[\-|｜|]\s*映画\.com.*$/i, '')
-      .replace(/\s*\(映画\.com\)\s*$/i, '')
-      .trim()
+    const title = normalizeEigaMovieTitle(rawTitle)
 
     if (!title) {
       return { success: false, error: 'タイトルを取得できませんでした' }
@@ -180,10 +189,7 @@ export async function fetchMoviePreviewFromEiga(movieUrl: string) {
       return { success: false, error: 'タイトルを取得できませんでした' }
     }
 
-    const title = rawTitle
-      .replace(/\s*[\-|｜|]\s*映画\.com.*$/i, '')
-      .replace(/\s*\(映画\.com\)\s*$/i, '')
-      .trim()
+    const title = normalizeEigaMovieTitle(rawTitle)
 
     if (!title) {
       return { success: false, error: 'タイトルを取得できませんでした' }
@@ -357,10 +363,15 @@ export async function addComment(planId: string, content: string) {
     return { success: false, error: '認証が必要です' }
   }
 
+  const parsed = commentSchema.safeParse({ content })
+  if (!parsed.success) {
+    return { success: false, error: parsed.error.issues[0]?.message || 'コメントが不正です' }
+  }
+
   const insertData: CommentInsert = {
     plan_id: planId,
     user_id: user.id,
-    content,
+    content: parsed.data.content,
   }
   const { error } = await supabase.from('plan_comments').insert(insertData)
 

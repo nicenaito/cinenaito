@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toggleReaction, addComment, deleteComment } from '@/app/actions'
@@ -51,6 +51,11 @@ export function PlanDetailClient({
   const [newComment, setNewComment] = useState('')
   const [isPending, startTransition] = useTransition()
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // サーバーから最新データが渡されたら同期
+  useEffect(() => {
+    setComments(initialComments)
+  }, [initialComments])
 
   const handleRequireLogin = () => {
     toast.error('ログインが必要です')
@@ -103,6 +108,8 @@ export function PlanDetailClient({
       if (result.success) {
         setNewComment('')
         toast.success('コメントを投稿しました')
+        // サーバーから最新のコメント一覧を再取得
+        router.refresh()
       } else {
         setComments((prev) => prev.filter((c) => c.id !== tempId))
         toast.error(result.error)

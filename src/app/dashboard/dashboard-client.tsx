@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
@@ -41,6 +41,11 @@ export function DashboardClient({
   const [items, setItems] = useState(plans)
   const [sortBy, setSortBy] = useState<SortOption>('reaction_desc')
 
+  // propsが変わった（月フィルタ切り替え等）ときにローカルstateを同期
+  useEffect(() => {
+    setItems(plans)
+  }, [plans])
+
   const handleMonthChange = (value: string) => {
     router.push(`/dashboard?month=${value}`)
   }
@@ -70,7 +75,14 @@ export function DashboardClient({
   }
 
   const displayedItems = useMemo(() => {
-    const sorted = [...items]
+    const getPlanMonth = (plan: MoviePlanWithStats) => {
+      if (plan.release_month) return plan.release_month
+      return extractYearMonthFromReleaseDate(plan.release_date) || plan.target_month
+    }
+
+    const filtered = items.filter((plan) => getPlanMonth(plan) === selectedMonth)
+
+    const sorted = [...filtered]
     if (sortBy === 'reaction_desc') {
       sorted.sort((a, b) => {
         if (b.reaction_count !== a.reaction_count) {
@@ -98,7 +110,7 @@ export function DashboardClient({
     }
 
     return sorted
-  }, [items, sortBy])
+  }, [items, selectedMonth, sortBy])
 
   return (
     <div>
