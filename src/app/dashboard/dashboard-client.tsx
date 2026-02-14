@@ -70,12 +70,7 @@ export function DashboardClient({
   }
 
   const displayedItems = useMemo(() => {
-    const filtered = items.filter((plan) => {
-      const releaseMonth = extractYearMonthFromReleaseDate(plan.release_date)
-      return releaseMonth === selectedMonth
-    })
-
-    const sorted = [...filtered]
+    const sorted = [...items]
     if (sortBy === 'reaction_desc') {
       sorted.sort((a, b) => {
         if (b.reaction_count !== a.reaction_count) {
@@ -93,8 +88,8 @@ export function DashboardClient({
 
     if (sortBy === 'release_asc') {
       sorted.sort((a, b) => {
-        const aReleaseMonth = extractYearMonthFromReleaseDate(a.release_date) || '9999-99'
-        const bReleaseMonth = extractYearMonthFromReleaseDate(b.release_date) || '9999-99'
+        const aReleaseMonth = extractYearMonthFromReleaseDate(a.release_date) || a.target_month
+        const bReleaseMonth = extractYearMonthFromReleaseDate(b.release_date) || b.target_month
         if (aReleaseMonth === bReleaseMonth) {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         }
@@ -103,7 +98,7 @@ export function DashboardClient({
     }
 
     return sorted
-  }, [items, selectedMonth, sortBy])
+  }, [items, sortBy])
 
   return (
     <div>

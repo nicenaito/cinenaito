@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { MoviePlanFormData } from '@/lib/validations'
 import { Database } from '@/types/database.types'
 import { getIsAdmin } from '@/lib/admin'
+import { extractYearMonthFromReleaseDate } from '@/lib/helpers'
 
 type MoviePlanInsert = Database['public']['Tables']['movie_plans']['Insert']
 type MoviePlanUpdate = Database['public']['Tables']['movie_plans']['Update']
@@ -214,6 +215,7 @@ export async function createMoviePlan(data: MoviePlanFormData) {
     user_id: user.id,
     title: data.title,
     release_date: data.release_date || null,
+    release_month: extractYearMonthFromReleaseDate(data.release_date || null) || data.target_month,
     movie_url: data.movie_url || null,
     youtube_url: data.youtube_url || null,
     comment: data.comment || null,
@@ -244,6 +246,7 @@ export async function updateMoviePlan(planId: string, data: MoviePlanFormData) {
   const updateData: MoviePlanUpdate = {
     title: data.title,
     release_date: data.release_date || null,
+    release_month: extractYearMonthFromReleaseDate(data.release_date || null) || data.target_month,
     movie_url: data.movie_url || null,
     youtube_url: data.youtube_url || null,
     comment: data.comment || null,
