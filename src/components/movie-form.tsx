@@ -1,13 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { moviePlanSchema, MoviePlanFormData } from '@/lib/validations'
 import { generateMonthOptions, getCurrentMonth } from '@/lib/helpers'
+import { fetchMovieInfoFromEiga } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -25,7 +26,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Film } from 'lucide-react'
+import { Loader2, Film, Search } from 'lucide-react'
 
 interface MovieFormProps {
   onSubmit: (data: MoviePlanFormData) => Promise<void>
@@ -35,12 +36,14 @@ interface MovieFormProps {
 
 export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormProps) {
   const monthOptions = generateMonthOptions()
+  const [isFetchingInfo, setIsFetchingInfo] = useState(false)
+  const [fetchedReleaseDate, setFetchedReleaseDate] = useState<string | null>(null)
 
   const form = useForm<MoviePlanFormData>({
     resolver: zodResolver(moviePlanSchema),
     defaultValues: {
-      title: '',
       movie_url: '',
+      title: '',
       youtube_url: '',
       comment: '',
       expectation: '気にはなっている',
@@ -53,6 +56,33 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
     await onSubmit(data)
   })
 
+  const handleFetchMovieInfo = async () => {
+    const movieUrl = form.getValues('movie_url')?.trim()
+
+    if (!movieUrl) {
+      form.setError('movie_url', { message: '映画.com URLを入力してください' })
+      return
+    }
+
+    setIsFetchingInfo(true)
+    try {
+      const result = await fetchMovieInfoFromEiga(movieUrl)
+
+      if (!result.success) {
+        form.setError('movie_url', { message: result.error || '情報取得に失敗しました' })
+        return
+      }
+
+      form.clearErrors('movie_url')
+      form.setValue('title', result.title, { shouldDirty: true, shouldValidate: true })
+      setFetchedReleaseDate(result.releaseDate ?? null)
+    } finally {
+      setIsFetchingInfo(false)
+    }
+  }
+
+  const currentTitle = form.watch('title')
+
   return (
     <Card className="bg-slate-800/50 border-slate-700">
       <CardHeader>
@@ -64,6 +94,59 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* 映画.com URL */}
+            <FormField
+              control={form.control}
+              name="movie_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-200">映画.com URL *</FormLabel>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <FormControl>
+                      <Input
+                        placeholder="https://eiga.com/movie/..."
+                        className="bg-slate-900 border-slate-600 text-white"
+                        {...field}
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleFetchMovieInfo}
+                      disabled={isFetchingInfo}
+                      className="sm:w-auto"
+                    >
+                      {isFetchingInfo ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          取得中
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4 mr-2" />
+                          情報を取得
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                  <FormDescription className="text-slate-400">
+                    まず映画.comの作品ページURLを入力し、「情報を取得」を押してください。
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {(currentTitle || fetchedReleaseDate) && (
+              <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-2">
+                <p className="text-xs text-slate-400">取得結果</p>
+                {currentTitle && <p className="text-sm text-slate-100">タイトル: {currentTitle}</p>}
+                {fetchedReleaseDate && (
+                  <p className="text-sm text-slate-100">公開日: {fetchedReleaseDate}</p>
+                )}
+              </div>
+            )}
+
             {/* 映画タイトル */}
             <FormField
               control={form.control}
@@ -73,11 +156,14 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
                   <FormLabel className="text-slate-200">映画タイトル *</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="例: オッペンハイマー"
+                      placeholder="URLから自動取得されます（必要なら編集可）"
                       className="bg-slate-900 border-slate-600 text-white"
                       {...field}
                     />
                   </FormControl>
+                  <FormDescription className="text-slate-400">
+                    情報取得に失敗した場合は手入力できます
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -160,25 +246,6 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
                   <FormDescription className="text-slate-400">
                     予告編の埋め込み表示に使用されます
                   </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* 映画.com URL */}
-            <FormField
-              control={form.control}
-              name="movie_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-slate-200">映画.com URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://eiga.com/movie/..."
-                      className="bg-slate-900 border-slate-600 text-white"
-                      {...field}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

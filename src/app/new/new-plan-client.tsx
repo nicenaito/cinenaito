@@ -21,7 +21,7 @@ export function NewPlanClient() {
       } else {
         toast.error(result.error || '登録に失敗しました')
       }
-    } catch (error) {
+    } catch {
       toast.error('エラーが発生しました')
     } finally {
       setIsSubmitting(false)
