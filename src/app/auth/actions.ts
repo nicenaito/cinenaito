@@ -17,28 +17,21 @@ export async function signInWithPassword(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient()
 
-  try {
-    // メールアドレスとパスワードでログイン
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+  const { data, error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
 
-    if (signInError) {
-      console.error('ログインエラー:', signInError)
-      return { success: false, error: 'メールアドレスまたはパスワードが違います' }
-    }
+  if (signInError) {
+    console.error('ログインエラー:', signInError)
+    return { success: false, error: 'メールアドレスまたはパスワードが違います' }
+  }
 
-    if (!data.user) {
-      return { success: false, error: 'ログインに失敗しました' }
-    }
-
-    // 次のページへリダイレクト
-    redirect(resolveNextPath(nextPath))
-  } catch (err) {
-    console.error('認証エラー:', err)
+  if (!data.user) {
     return { success: false, error: 'ログインに失敗しました' }
   }
+
+  redirect(resolveNextPath(nextPath))
 }
 
 export async function signUpWithPassword(

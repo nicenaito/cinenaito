@@ -5,7 +5,7 @@
 ## 主な機能
 
 - **ログイン**: メールアドレスとパスワードで認証
-- **映画予定投稿**: タイトル、映画.com URL、YouTube予告編URL、コメントを登録
+- **映画予定投稿**: 映画.com URLを入力してタイトル・公開日を自動取得し、YouTube予告編URLやコメントを登録
 - **期待度バッジ**: 「絶対観る」「時間が合えば」「気にはなっている」
 - **月別フィルタ**: 対象月で一覧を絞り込み
 - **リアクション**: 「自分も観る」を1ユーザー1投稿で表現
@@ -40,6 +40,13 @@ npm run dev
 1. Supabase Dashboard でプロジェクト作成
 2. SQL Editor で [supabase/schema.sql](supabase/schema.sql) を実行
 3. Project Settings から URL と anon key を取得
+
+既存DBを利用中の場合は、公開日表示のために以下を追加実行してください。
+
+```sql
+ALTER TABLE movie_plans
+ADD COLUMN IF NOT EXISTS release_date TEXT;
+```
 
 ### 2) ユーザー認証
 

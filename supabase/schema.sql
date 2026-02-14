@@ -98,6 +98,7 @@ CREATE TABLE movie_plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   title TEXT NOT NULL,
+  release_date TEXT,
   movie_url TEXT, -- 映画.com URL
   youtube_url TEXT, -- YouTube予告編URL
   comment TEXT,

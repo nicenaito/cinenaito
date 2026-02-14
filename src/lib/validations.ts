@@ -1,18 +1,27 @@
 import { z } from 'zod'
 
 const urlPattern = /^https?:\/\/.+/
+const eigaUrlPattern = /^https?:\/\/(?:www\.)?eiga\.com\/movie\/.+/
 
 export const moviePlanSchema = z.object({
   title: z
     .string()
     .min(1, '映画タイトルは必須です')
     .max(200, '映画タイトルは200文字以内で入力してください'),
+  release_date: z
+    .string()
+    .max(50, '公開日は50文字以内で入力してください')
+    .optional(),
   movie_url: z
     .string()
-    .optional()
+    .min(1, '映画.com URLは必須です')
     .refine(
-      (val) => !val || urlPattern.test(val),
+      (val) => urlPattern.test(val),
       '有効なURLを入力してください'
+    )
+    .refine(
+      (val) => eigaUrlPattern.test(val),
+      '映画.comの作品ページURL（https://eiga.com/movie/...）を入力してください'
     ),
   youtube_url: z
     .string()
