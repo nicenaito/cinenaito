@@ -31,11 +31,11 @@ export function EigaEmbedCard({ movieUrl, title }: EigaEmbedCardProps) {
       const result = await fetchMoviePreviewFromEiga(movieUrl)
       if (result.success) {
         setPreview({
-          title: result.title,
+          title: result.title ?? title,
           releaseDate: result.releaseDate ?? null,
           description: result.description ?? null,
           imageUrl: result.imageUrl ?? null,
-          movieUrl: result.movieUrl,
+          movieUrl: result.movieUrl ?? movieUrl,
         })
       }
     } finally {
