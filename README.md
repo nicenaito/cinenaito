@@ -41,12 +41,17 @@ npm run dev
 2. SQL Editor で [supabase/schema.sql](supabase/schema.sql) を実行
 3. Project Settings から URL と anon key を取得
 
-既存DBを利用中の場合は、公開日表示のために以下を追加実行してください。
+既存DBを利用中の場合は、以下を追加実行してください。
+
+- 公開日表示対応: `release_date` 列追加
+- 月絞り込み最適化: `release_month` 列追加 + 既存データ補完 + インデックス作成
 
 ```sql
 ALTER TABLE movie_plans
 ADD COLUMN IF NOT EXISTS release_date TEXT;
 ```
+
+`release_month` 最適化は [supabase/migrations/20260214_add_release_month.sql](supabase/migrations/20260214_add_release_month.sql) を実行してください。
 
 ### 2) ユーザー認証
 

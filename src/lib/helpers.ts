@@ -43,6 +43,10 @@ export function getCurrentMonth(): string {
   return `${year}-${month}`
 }
 
+export function isValidYearMonth(value: string): boolean {
+  return /^\d{4}-\d{2}$/.test(value)
+}
+
 /**
  * 月のリストを生成（前後6ヶ月）
  */
@@ -91,10 +95,26 @@ export function extractYearMonthFromReleaseDate(releaseDate: string | null): str
     return `${isoMatch[1]}-${isoMatch[2]}`
   }
 
+  const isoMonthOnly = releaseDate.match(/^(\d{4})-(\d{2})$/)
+  if (isoMonthOnly) {
+    return `${isoMonthOnly[1]}-${isoMonthOnly[2]}`
+  }
+
+  const slashDate = releaseDate.match(/^(\d{4})\/(\d{1,2})(?:\/\d{1,2})?$/)
+  if (slashDate) {
+    return `${slashDate[1]}-${slashDate[2].padStart(2, '0')}`
+  }
+
   const jpMatch = releaseDate.match(/(\d{4})年\s*(\d{1,2})月\s*\d{1,2}日/)
   if (jpMatch) {
     const month = jpMatch[2].padStart(2, '0')
     return `${jpMatch[1]}-${month}`
+  }
+
+  const jpMonthOnly = releaseDate.match(/(\d{4})年\s*(\d{1,2})月/)
+  if (jpMonthOnly) {
+    const month = jpMonthOnly[2].padStart(2, '0')
+    return `${jpMonthOnly[1]}-${month}`
   }
 
   return null
