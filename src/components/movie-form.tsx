@@ -37,13 +37,13 @@ interface MovieFormProps {
 export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormProps) {
   const monthOptions = generateMonthOptions()
   const [isFetchingInfo, setIsFetchingInfo] = useState(false)
-  const [fetchedReleaseDate, setFetchedReleaseDate] = useState<string | null>(null)
 
   const form = useForm<MoviePlanFormData>({
     resolver: zodResolver(moviePlanSchema),
     defaultValues: {
       movie_url: '',
       title: '',
+      release_date: '',
       youtube_url: '',
       comment: '',
       expectation: '気にはなっている',
@@ -75,13 +75,14 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
 
       form.clearErrors('movie_url')
       form.setValue('title', result.title, { shouldDirty: true, shouldValidate: true })
-      setFetchedReleaseDate(result.releaseDate ?? null)
+      form.setValue('release_date', result.releaseDate ?? '', { shouldDirty: true })
     } finally {
       setIsFetchingInfo(false)
     }
   }
 
   const currentTitle = form.watch('title')
+  const currentReleaseDate = form.watch('release_date')
 
   return (
     <Card className="bg-slate-800/50 border-slate-700">
@@ -94,6 +95,8 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-6">
+            <input type="hidden" {...form.register('release_date')} />
+
             {/* 映画.com URL */}
             <FormField
               control={form.control}
@@ -137,12 +140,12 @@ export function MovieForm({ onSubmit, isSubmitting, defaultValues }: MovieFormPr
               )}
             />
 
-            {(currentTitle || fetchedReleaseDate) && (
+            {(currentTitle || currentReleaseDate) && (
               <div className="rounded-md border border-slate-700 bg-slate-900/60 p-4 space-y-2">
                 <p className="text-xs text-slate-400">取得結果</p>
                 {currentTitle && <p className="text-sm text-slate-100">タイトル: {currentTitle}</p>}
-                {fetchedReleaseDate && (
-                  <p className="text-sm text-slate-100">公開日: {fetchedReleaseDate}</p>
+                {currentReleaseDate && (
+                  <p className="text-sm text-slate-100">公開日: {currentReleaseDate}</p>
                 )}
               </div>
             )}

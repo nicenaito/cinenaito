@@ -59,6 +59,9 @@ export function MovieCard({
             <p className="text-xs text-slate-500 mt-1">
               {formatMonth(plan.target_month)} の予定
             </p>
+            {plan.release_date && (
+              <p className="text-xs text-slate-400 mt-1">公開日: {plan.release_date}</p>
+            )}
             <div className="mt-2">
               <ExpectationBadge expectation={plan.expectation} />
             </div>

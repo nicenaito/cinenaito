@@ -19,6 +19,7 @@ interface MoviePlanWithProfile {
   id: string
   user_id: string
   title: string
+  release_date: string | null
   movie_url: string | null
   youtube_url: string | null
   comment: string | null
@@ -146,6 +147,9 @@ export default async function PlanDetailPage({
                 <p className="text-slate-400 text-sm">
                   {formatMonth(plan.target_month)} の鑑賞予定
                 </p>
+                {plan.release_date && (
+                  <p className="text-slate-400 text-sm">公開日: {plan.release_date}</p>
+                )}
               </div>
             </CardHeader>
 

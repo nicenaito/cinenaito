@@ -8,6 +8,10 @@ export const moviePlanSchema = z.object({
     .string()
     .min(1, '映画タイトルは必須です')
     .max(200, '映画タイトルは200文字以内で入力してください'),
+  release_date: z
+    .string()
+    .max(50, '公開日は50文字以内で入力してください')
+    .optional(),
   movie_url: z
     .string()
     .min(1, '映画.com URLは必須です')

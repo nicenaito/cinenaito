@@ -132,6 +132,7 @@ export async function createMoviePlan(data: MoviePlanFormData) {
   const insertData: MoviePlanInsert = {
     user_id: user.id,
     title: data.title,
+    release_date: data.release_date || null,
     movie_url: data.movie_url || null,
     youtube_url: data.youtube_url || null,
     comment: data.comment || null,
