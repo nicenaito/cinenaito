@@ -1,12 +1,12 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
 import { MoviePlanWithStats } from '@/types/database.types'
-import { extractYearMonthFromReleaseDate } from '@/lib/helpers'
+import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ import { Film, Clapperboard } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'reaction_desc' | 'newest' | 'release_asc'
+const PAGE_SIZE = 9
 
 interface DashboardClientProps {
   plans: MoviePlanWithStats[]
@@ -38,15 +39,12 @@ export function DashboardClient({
 }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [items, setItems] = useState(plans)
   const [sortBy, setSortBy] = useState<SortOption>('reaction_desc')
-
-  // propsが変わった（月フィルタ切り替え等）ときにローカルstateを同期
-  useEffect(() => {
-    setItems(plans)
-  }, [plans])
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
 
   const handleMonthChange = (value: string) => {
+    setVisibleCount(PAGE_SIZE)
     router.push(`/dashboard?month=${value}`)
   }
 
@@ -65,24 +63,16 @@ export function DashboardClient({
   }
 
   const handleDelete = async (planId: string) => {
-    const prev = items
-    setItems((current) => current.filter((plan) => plan.id !== planId))
     const result = await deleteMoviePlan(planId)
     if (!result.success) {
-      setItems(prev)
       alert(result.error || '削除に失敗しました')
+      return
     }
+    router.refresh()
   }
 
   const displayedItems = useMemo(() => {
-    const getPlanMonth = (plan: MoviePlanWithStats) => {
-      if (plan.release_month) return plan.release_month
-      return extractYearMonthFromReleaseDate(plan.release_date) || plan.target_month
-    }
-
-    const filtered = items.filter((plan) => getPlanMonth(plan) === selectedMonth)
-
-    const sorted = [...filtered]
+    const sorted = [...plans]
     if (sortBy === 'reaction_desc') {
       sorted.sort((a, b) => {
         if (b.reaction_count !== a.reaction_count) {
@@ -100,8 +90,8 @@ export function DashboardClient({
 
     if (sortBy === 'release_asc') {
       sorted.sort((a, b) => {
-        const aReleaseMonth = extractYearMonthFromReleaseDate(a.release_date) || a.target_month
-        const bReleaseMonth = extractYearMonthFromReleaseDate(b.release_date) || b.target_month
+        const aReleaseMonth = a.release_month || a.target_month
+        const bReleaseMonth = b.release_month || b.target_month
         if (aReleaseMonth === bReleaseMonth) {
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         }
@@ -110,7 +100,14 @@ export function DashboardClient({
     }
 
     return sorted
-  }, [items, selectedMonth, sortBy])
+  }, [plans, sortBy])
+
+  const visibleItems = useMemo(
+    () => displayedItems.slice(0, visibleCount),
+    [displayedItems, visibleCount]
+  )
+
+  const hasMore = displayedItems.length > visibleCount
 
   return (
     <div>
@@ -122,7 +119,13 @@ export function DashboardClient({
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />
-          <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+          <Select
+            value={sortBy}
+            onValueChange={(value: SortOption) => {
+              setSortBy(value)
+              setVisibleCount(PAGE_SIZE)
+            }}
+          >
             <SelectTrigger className="w-[220px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
               <SelectValue placeholder="並び順を選択" />
             </SelectTrigger>
@@ -155,22 +158,36 @@ export function DashboardClient({
           </p>
         </div>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {displayedItems.map((plan, i) => (
-            <MovieCard
-              key={plan.id}
-              plan={plan}
-              currentUserId={currentUserId}
-              isAdmin={isAdmin}
-              isLoggedIn={isLoggedIn}
-              userReacted={reactedPlanIds.includes(plan.id)}
-              onReaction={handleReaction}
-              onRequireLogin={handleRequireLogin}
-              onDelete={handleDelete}
-              index={i}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {visibleItems.map((plan, i) => (
+              <MovieCard
+                key={plan.id}
+                plan={plan}
+                currentUserId={currentUserId}
+                isAdmin={isAdmin}
+                isLoggedIn={isLoggedIn}
+                userReacted={reactedPlanIdSet.has(plan.id)}
+                onReaction={handleReaction}
+                onRequireLogin={handleRequireLogin}
+                onDelete={handleDelete}
+                index={i}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
+                className="border-white/10 text-slate-300 hover:text-cinema-gold-light hover:border-cinema-gold/30 transition-colors"
+              >
+                もっと見る ({visibleItems.length}/{displayedItems.length})
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   )

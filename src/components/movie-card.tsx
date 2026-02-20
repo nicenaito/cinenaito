@@ -120,7 +120,7 @@ export function MovieCard({
           />
 
           {/* コメント数 */}
-          <Link href={`/plans/${plan.id}`}>
+          <Link href={`/plans/${plan.id}`} prefetch={false}>
             <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-cinema-gold-light transition-colors">
               <MessageCircle className="w-4 h-4" />
               <span>コメント</span>
@@ -129,7 +129,7 @@ export function MovieCard({
           </Link>
 
           {canEdit && (
-            <Link href={`/plans/${plan.id}/edit`}>
+            <Link href={`/plans/${plan.id}/edit`} prefetch={false}>
               <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300 transition-colors">
                 <Pencil className="w-4 h-4" />
                 <span className="hidden sm:inline">編集</span>
