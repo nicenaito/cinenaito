@@ -54,20 +54,51 @@ export default async function PlanDetailPage({
   params: Promise<{ id: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const isAdmin = user ? await getIsAdmin(supabase, user.id) : false
 
-  const { id } = await params
+  // ユーザー情報とパラメータを並列取得
+  const [{ data: { user } }, { id }] = await Promise.all([
+    supabase.auth.getUser(),
+    params,
+  ])
 
-  // 投稿を取得
-  const { data: planData, error } = await supabase
-    .from('movie_plans')
-    .select(`
-      *,
-      profiles:user_id (username, avatar_url)
-    `)
-    .eq('id', id)
-    .single()
+  // 投稿・コメント・管理者判定・リアクション情報を並列取得
+  const [
+    { data: planData, error },
+    { data: commentsData },
+    isAdmin,
+    reactionResult,
+    { count: reactionCount },
+  ] = await Promise.all([
+    supabase
+      .from('movie_plans')
+      .select(`
+        *,
+        profiles:user_id (username, avatar_url)
+      `)
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('plan_comments')
+      .select(`
+        *,
+        profiles:user_id (username, avatar_url)
+      `)
+      .eq('plan_id', id)
+      .order('created_at', { ascending: true }),
+    user ? getIsAdmin(supabase, user.id) : Promise.resolve(false),
+    user
+      ? supabase
+          .from('reactions')
+          .select('id')
+          .eq('plan_id', id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from('reactions')
+      .select('*', { count: 'exact', head: true })
+      .eq('plan_id', id),
+  ])
 
   const plan = planData as MoviePlanWithProfile | null
 
@@ -81,35 +112,8 @@ export default async function PlanDetailPage({
     redirect('/dashboard')
   }
 
-  // コメントを取得
-  const { data: commentsData } = await supabase
-    .from('plan_comments')
-    .select(`
-      *,
-      profiles:user_id (username, avatar_url)
-    `)
-    .eq('plan_id', id)
-    .order('created_at', { ascending: true })
-
   const comments = (commentsData as CommentWithProfile[] | null) || []
-
-  // リアクション状態を取得
-  let reaction: { id: string } | null = null
-  if (user) {
-    const { data: reactionData } = await supabase
-      .from('reactions')
-      .select('id')
-      .eq('plan_id', id)
-      .eq('user_id', user.id)
-      .maybeSingle()
-
-    reaction = reactionData as { id: string } | null
-  }
-
-  const { count: reactionCount } = await supabase
-    .from('reactions')
-    .select('*', { count: 'exact', head: true })
-    .eq('plan_id', id)
+  const reaction = reactionResult.data as { id: string } | null
 
   return (
     <div className="min-h-screen cinema-bg">

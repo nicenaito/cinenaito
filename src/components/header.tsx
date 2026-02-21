@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
@@ -6,8 +7,31 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Film, Plus, LogOut, Shield, Sparkles } from 'lucide-react'
 import { Profile } from '@/types/database.types'
 
-export async function Header() {
+function HeaderSkeleton() {
+  return (
+    <header className="sticky top-0 z-50 glass-header">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+          <div className="relative">
+            <Film className="w-6 h-6 text-cinema-gold transition-transform group-hover:scale-110" />
+          </div>
+          <div className="flex flex-col">
+            <span className="font-bold text-lg text-cinema-gradient leading-tight">CineNaito</span>
+            <span className="text-[10px] text-slate-400 leading-tight hidden sm:block">映画好きサークル</span>
+          </div>
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="w-20 h-8 rounded bg-white/5 animate-pulse" />
+        </div>
+      </div>
+    </header>
+  )
+}
+
+async function HeaderContent() {
   const supabase = await createClient()
+
+  // ユーザー情報とプロフィールを効率的に取得
   const { data: { user } } = await supabase.auth.getUser()
 
   let profile: Profile | null = null
@@ -85,5 +109,13 @@ export async function Header() {
         )}
       </div>
     </header>
+  )
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={<HeaderSkeleton />}>
+      <HeaderContent />
+    </Suspense>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
@@ -43,33 +43,33 @@ export function DashboardClient({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
 
-  const handleMonthChange = (value: string) => {
+  const handleMonthChange = useCallback((value: string) => {
     setVisibleCount(PAGE_SIZE)
     router.push(`/dashboard?month=${value}`)
-  }
+  }, [router])
 
-  const handleRequireLogin = () => {
+  const handleRequireLogin = useCallback(() => {
     toast.error('リアクションにはログインが必要です')
     const next = pathname || '/dashboard'
     router.push(`/login?next=${encodeURIComponent(next)}`)
-  }
+  }, [pathname, router])
 
-  const handleReaction = async (planId: string) => {
+  const handleReaction = useCallback(async (planId: string) => {
     if (!isLoggedIn) {
       handleRequireLogin()
       return { success: false, reacted: false }
     }
     return await toggleReaction(planId)
-  }
+  }, [isLoggedIn, handleRequireLogin])
 
-  const handleDelete = async (planId: string) => {
+  const handleDelete = useCallback(async (planId: string) => {
     const result = await deleteMoviePlan(planId)
     if (!result.success) {
       alert(result.error || '削除に失敗しました')
       return
     }
     router.refresh()
-  }
+  }, [router])
 
   const displayedItems = useMemo(() => {
     const sorted = [...plans]
