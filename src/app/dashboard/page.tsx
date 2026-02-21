@@ -17,17 +17,19 @@ export default async function DashboardPage({
   searchParams: Promise<{ month?: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const isAdmin = user ? await getIsAdmin(supabase, user.id) : false
 
-  const params = await searchParams
+  // ユーザー情報と検索パラメータを並列取得
+  const [{ data: { user } }, params] = await Promise.all([
+    supabase.auth.getUser(),
+    searchParams,
+  ])
+
   const monthParam = params.month
   const selectedMonth = monthParam && isValidYearMonth(monthParam)
     ? monthParam
     : getCurrentMonth()
 
-  // 映画予定を取得（release_month が未反映な環境ではフォールバック）
-  let plans: MoviePlanWithStats[] = []
+  // 映画予定・管理者判定・リアクション状態を並列取得
   const baseQuery = () =>
     supabase
       .from('movie_plans_with_stats')
@@ -35,10 +37,22 @@ export default async function DashboardPage({
       .order('reaction_count', { ascending: false })
       .order('created_at', { ascending: false })
 
-  const filteredResult = await baseQuery().or(
-    `release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`
-  )
+  const [filteredResult, isAdmin, reactedPlanIds] = await Promise.all([
+    baseQuery().or(
+      `release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`
+    ),
+    user ? getIsAdmin(supabase, user.id) : Promise.resolve(false),
+    user
+      ? supabase
+          .from('reactions')
+          .select('plan_id')
+          .eq('user_id', user.id)
+          .returns<{ plan_id: string }[]>()
+          .then(({ data }) => new Set(data?.map((r) => r.plan_id) || []))
+      : Promise.resolve(new Set<string>()),
+  ])
 
+  let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
     console.error('データ取得エラー（release_month フィルタ）:', filteredResult.error)
     const fallbackResult = await baseQuery().eq('target_month', selectedMonth)
@@ -50,18 +64,6 @@ export default async function DashboardPage({
     }
   } else {
     plans = (filteredResult.data as MoviePlanWithStats[] | null) || []
-  }
-
-  // ユーザーのリアクション状態を取得
-  let reactedPlanIds = new Set<string>()
-  if (user) {
-    const { data: userReactions } = await supabase
-      .from('reactions')
-      .select('plan_id')
-      .eq('user_id', user.id)
-      .returns<{ plan_id: string }[]>()
-
-    reactedPlanIds = new Set(userReactions?.map((r) => r.plan_id) || [])
   }
 
   return (

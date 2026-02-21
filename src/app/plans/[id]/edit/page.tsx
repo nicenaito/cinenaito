@@ -18,20 +18,26 @@ export default async function EditPlanPage({
   params: Promise<{ id: string }>
 }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  const { id } = await params
+
+  // ユーザー情報とパラメータを並列取得
+  const [{ data: { user } }, { id }] = await Promise.all([
+    supabase.auth.getUser(),
+    params,
+  ])
 
   if (!user) {
     redirect(`/login?next=/plans/${id}/edit`)
   }
 
-  const isAdmin = await getIsAdmin(supabase, user.id)
-
-  const { data: plan, error } = await supabase
-    .from('movie_plans')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // 管理者判定と投稿データを並列取得
+  const [isAdmin, { data: plan, error }] = await Promise.all([
+    getIsAdmin(supabase, user.id),
+    supabase
+      .from('movie_plans')
+      .select('*')
+      .eq('id', id)
+      .single(),
+  ])
 
   if (error || !plan) {
     notFound()

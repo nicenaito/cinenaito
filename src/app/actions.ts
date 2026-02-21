@@ -336,7 +336,7 @@ export async function toggleReaction(planId: string) {
       return { success: false, reacted: true, error: 'リアクション解除に失敗しました' }
     }
 
-    revalidatePath('/dashboard')
+    // 楽観的更新をクライアントで行うため、重い revalidate は避ける
     return { success: true, reacted: false }
   } else {
     // リアクションを追加
@@ -350,7 +350,7 @@ export async function toggleReaction(planId: string) {
       return { success: false, reacted: false, error: 'リアクション追加に失敗しました' }
     }
 
-    revalidatePath('/dashboard')
+    // 楽観的更新をクライアントで行うため、重い revalidate は避ける
     return { success: true, reacted: true }
   }
 }

@@ -1,16 +1,23 @@
 'use client'
 
+import { memo } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { YouTubeEmbed } from '@/components/youtube-embed'
 import { ExpectationBadge } from '@/components/expectation-badge'
 import { ReactionButton } from '@/components/reaction-button'
-import { EigaEmbedCard } from '@/components/eiga-embed-card'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
 import { MessageCircle, Trash2, Pencil } from 'lucide-react'
 import Link from 'next/link'
+
+const YouTubeEmbed = dynamic(() => import('@/components/youtube-embed').then(m => ({ default: m.YouTubeEmbed })), {
+  loading: () => <div className="aspect-video rounded-lg bg-white/5 animate-pulse" />,
+})
+const EigaEmbedCard = dynamic(() => import('@/components/eiga-embed-card').then(m => ({ default: m.EigaEmbedCard })), {
+  loading: () => <div className="h-20 rounded-lg bg-white/5 animate-pulse" />,
+})
 
 interface MovieCardProps {
   plan: MoviePlanWithStats
@@ -24,7 +31,7 @@ interface MovieCardProps {
   index?: number
 }
 
-export function MovieCard({
+export const MovieCard = memo(function MovieCard({
   plan,
   currentUserId,
   isAdmin = false,
@@ -151,4 +158,4 @@ export function MovieCard({
       </CardFooter>
     </Card>
   )
-}
+})

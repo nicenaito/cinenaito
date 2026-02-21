@@ -22,11 +22,14 @@ const previewCache = new Map<string, MoviePreview | null>()
 export function EigaEmbedCard({ movieUrl, title }: EigaEmbedCardProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [preview, setPreview] = useState<MoviePreview | null>(null)
-  const [hasTried, setHasTried] = useState(false)
+  const [preview, setPreview] = useState<MoviePreview | null>(() =>
+    previewCache.get(movieUrl) ?? null
+  )
+  const [hasTried, setHasTried] = useState(() => previewCache.has(movieUrl))
+  const isLoadingRef = useRef(false)
 
   const loadPreview = useCallback(async () => {
-    if (isLoading) return
+    if (isLoadingRef.current) return
     if (previewCache.has(movieUrl)) {
       const cached = previewCache.get(movieUrl) ?? null
       setPreview(cached)
@@ -34,6 +37,7 @@ export function EigaEmbedCard({ movieUrl, title }: EigaEmbedCardProps) {
       return
     }
 
+    isLoadingRef.current = true
     setIsLoading(true)
     try {
       const result = await fetchMoviePreviewFromEiga(movieUrl)
@@ -52,9 +56,10 @@ export function EigaEmbedCard({ movieUrl, title }: EigaEmbedCardProps) {
       }
     } finally {
       setHasTried(true)
+      isLoadingRef.current = false
       setIsLoading(false)
     }
-  }, [isLoading, movieUrl, title])
+  }, [movieUrl, title])
 
   useEffect(() => {
     const node = containerRef.current
