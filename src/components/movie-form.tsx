@@ -223,9 +223,9 @@ export function MovieForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-200">鑑賞予定月 *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+                      <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="月を選択" />
                       </SelectTrigger>
                     </FormControl>
@@ -253,9 +253,9 @@ export function MovieForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-200">期待度 *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+                      <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="期待度を選択" />
                       </SelectTrigger>
                     </FormControl>
