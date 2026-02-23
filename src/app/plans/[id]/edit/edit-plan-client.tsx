@@ -40,6 +40,7 @@ export function EditPlanClient({ planId, defaultValues }: EditPlanClientProps) {
       defaultValues={defaultValues}
       title="映画情報を編集"
       submitLabel="更新する"
+      editingPlanId={planId}
     />
   )
 }

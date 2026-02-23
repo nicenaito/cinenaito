@@ -8,7 +8,7 @@ import { ExpectationBadge } from '@/components/expectation-badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ArrowLeft, ExternalLink, Pencil } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Pencil, Play } from 'lucide-react'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
@@ -171,17 +171,32 @@ export default async function PlanDetailPage({
                 <p className="text-slate-300 whitespace-pre-wrap leading-relaxed">{plan.comment}</p>
               )}
 
-              {/* 映画.com リンク */}
-              {plan.movie_url && (
-                <a
-                  href={plan.movie_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-cinema-gold hover:text-cinema-gold-light transition-colors"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  映画.comで詳細を見る
-                </a>
+              {/* 外部リンク */}
+              {(plan.movie_url || plan.youtube_url) && (
+                <div className="flex flex-wrap gap-3">
+                  {plan.movie_url && (
+                    <a
+                      href={plan.movie_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-cinema-gold/30 bg-cinema-gold/5 text-cinema-gold hover:bg-cinema-gold/15 hover:border-cinema-gold/50 transition-all text-sm font-medium"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      映画.comで詳細を見る
+                    </a>
+                  )}
+                  {plan.youtube_url && (
+                    <a
+                      href={plan.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/50 transition-all text-sm font-medium"
+                    >
+                      <Play className="w-4 h-4" />
+                      YouTubeで予告編を見る
+                    </a>
+                  )}
+                </div>
               )}
 
               {/* 投稿者情報 */}

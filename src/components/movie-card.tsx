@@ -9,7 +9,7 @@ import { ExpectationBadge } from '@/components/expectation-badge'
 import { ReactionButton } from '@/components/reaction-button'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
-import { MessageCircle, Trash2, Pencil } from 'lucide-react'
+import { MessageCircle, Trash2, Pencil, ExternalLink, Play } from 'lucide-react'
 import Link from 'next/link'
 
 const YouTubeEmbed = dynamic(() => import('@/components/youtube-embed').then(m => ({ default: m.YouTubeEmbed })), {
@@ -115,7 +115,7 @@ export const MovieCard = memo(function MovieCard({
       </CardContent>
 
       <CardFooter className="border-t border-white/5 pt-4">
-        <div className="flex items-center gap-3 w-full">
+        <div className="flex items-center gap-3 w-full flex-wrap">
           {/* リアクションボタン */}
           <ReactionButton
             planId={plan.id}
@@ -134,6 +134,22 @@ export const MovieCard = memo(function MovieCard({
               {plan.comment_count > 0 && <span className="text-cinema-gold/70">({plan.comment_count})</span>}
             </Button>
           </Link>
+
+          {/* 外部リンク */}
+          {plan.movie_url && (
+            <a href={plan.movie_url} target="_blank" rel="noopener noreferrer" title="映画.comで見る">
+              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-cinema-gold-light transition-colors px-2">
+                <ExternalLink className="w-4 h-4" />
+              </Button>
+            </a>
+          )}
+          {plan.youtube_url && (
+            <a href={plan.youtube_url} target="_blank" rel="noopener noreferrer" title="YouTube予告編">
+              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-400 transition-colors px-2">
+                <Play className="w-4 h-4" />
+              </Button>
+            </a>
+          )}
 
           {canEdit && (
             <Link href={`/plans/${plan.id}/edit`} prefetch={false}>
