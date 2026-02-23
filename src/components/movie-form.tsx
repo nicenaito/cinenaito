@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { moviePlanSchema, MoviePlanFormData } from '@/lib/validations'
 import { generateMonthOptions, getCurrentMonth } from '@/lib/helpers'
-import { fetchMovieInfoFromEiga } from '@/app/actions'
+import { fetchMovieInfoFromEiga, checkDuplicateMovieUrl } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -26,7 +26,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Film, Search } from 'lucide-react'
+import { Loader2, Film, Search, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
 
 interface MovieFormProps {
   onSubmit: (data: MoviePlanFormData) => Promise<void>
@@ -34,6 +35,7 @@ interface MovieFormProps {
   defaultValues?: Partial<MoviePlanFormData>
   title?: string
   submitLabel?: string
+  editingPlanId?: string
 }
 
 export function MovieForm({
@@ -42,9 +44,11 @@ export function MovieForm({
   defaultValues,
   title = '映画情報を登録',
   submitLabel = '登録する',
+  editingPlanId,
 }: MovieFormProps) {
   const monthOptions = generateMonthOptions()
   const [isFetchingInfo, setIsFetchingInfo] = useState(false)
+  const [duplicateInfo, setDuplicateInfo] = useState<{ planId: string; title: string } | null>(null)
 
   const form = useForm<MoviePlanFormData>({
     resolver: zodResolver(moviePlanSchema),
@@ -73,12 +77,24 @@ export function MovieForm({
     }
 
     setIsFetchingInfo(true)
+    setDuplicateInfo(null)
     try {
-      const result = await fetchMovieInfoFromEiga(movieUrl)
+      // 情報取得と重複チェックを並列実行
+      const [result, dupResult] = await Promise.all([
+        fetchMovieInfoFromEiga(movieUrl),
+        checkDuplicateMovieUrl(movieUrl, editingPlanId),
+      ])
 
       if (!result.success) {
         form.setError('movie_url', { message: result.error || '情報取得に失敗しました' })
         return
+      }
+
+      if (dupResult.isDuplicate) {
+        setDuplicateInfo({
+          planId: dupResult.existingPlanId!,
+          title: dupResult.existingTitle!,
+        })
       }
 
       form.clearErrors('movie_url')
@@ -147,6 +163,25 @@ export function MovieForm({
                 </FormItem>
               )}
             />
+
+            {/* 重複警告 */}
+            {duplicateInfo && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm text-amber-200 font-medium">この映画はすでに投稿されています</p>
+                  <p className="text-xs text-amber-300/80">
+                    「{duplicateInfo.title}」として登録済みです。
+                  </p>
+                  <Link
+                    href={`/plans/${duplicateInfo.planId}`}
+                    className="inline-block text-xs text-cinema-gold hover:text-cinema-gold-light transition-colors mt-1"
+                  >
+                    既存の投稿を見る →
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {(currentTitle || currentReleaseDate) && (
               <div className="rounded-lg border border-cinema-gold/20 bg-cinema-gold/5 p-4 space-y-2">
@@ -284,7 +319,7 @@ export function MovieForm({
             {/* 送信ボタン */}
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!editingPlanId && !!duplicateInfo)}
               className="w-full btn-cinema rounded-lg"
             >
               {isSubmitting ? (

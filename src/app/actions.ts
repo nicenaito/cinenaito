@@ -164,6 +164,31 @@ export async function fetchMovieInfoFromEiga(movieUrl: string) {
   }
 }
 
+export async function checkDuplicateMovieUrl(movieUrl: string, excludePlanId?: string) {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('movie_plans')
+    .select('id, title')
+    .eq('movie_url', movieUrl)
+
+  if (excludePlanId) {
+    query = query.neq('id', excludePlanId)
+  }
+
+  const { data: existing } = await query.maybeSingle()
+
+  if (existing) {
+    return {
+      isDuplicate: true,
+      existingPlanId: existing.id,
+      existingTitle: existing.title,
+    }
+  }
+
+  return { isDuplicate: false }
+}
+
 export async function fetchMoviePreviewFromEiga(movieUrl: string) {
   if (!isValidEigaUrl(movieUrl)) {
     return {
@@ -215,6 +240,23 @@ export async function createMoviePlan(data: MoviePlanFormData) {
 
   if (!user) {
     return { success: false, error: '認証が必要です' }
+  }
+
+  // 映画.com URLの重複チェック
+  if (data.movie_url) {
+    const { data: existing } = await supabase
+      .from('movie_plans')
+      .select('id, title')
+      .eq('movie_url', data.movie_url)
+      .maybeSingle()
+
+    if (existing) {
+      return {
+        success: false,
+        error: `この映画はすでに投稿されています（「${existing.title}」）`,
+        duplicatePlanId: existing.id,
+      }
+    }
   }
 
   const insertData: MoviePlanInsert = {
