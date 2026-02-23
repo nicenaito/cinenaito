@@ -13,12 +13,11 @@ import Link from 'next/link'
 
 export function LoginForm() {
   const searchParams = useSearchParams()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const nextPath = searchParams.get('next')
-  const message = searchParams.get('message')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -26,7 +25,7 @@ export function LoginForm() {
     setIsLoading(true)
 
     try {
-      const result = await signInWithPassword(email, password, nextPath)
+      const result = await signInWithPassword(username, password, nextPath)
       if (!result.success) {
         setError(result.error || 'ログインに失敗しました')
         toast.error(result.error || 'ログインに失敗しました')
@@ -51,20 +50,15 @@ export function LoginForm() {
           <CardDescription className="text-slate-400">ログイン</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {message === 'check_email' && (
-            <div className="text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
-              登録確認メールを送信しました。メール内のリンクを開いてからログインしてください。
-            </div>
-          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">メールアドレス</Label>
+              <Label htmlFor="username" className="text-slate-300">ユーザー名</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                placeholder="ユーザー名を入力"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
                 className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 focus:ring-cinema-gold/20"
