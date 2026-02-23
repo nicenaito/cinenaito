@@ -158,6 +158,7 @@ export function MovieForm({
                   </div>
                   <FormDescription className="text-slate-500">
                     まず映画.comの作品ページURLを入力し、「情報を取得」を押してください。
+                    <a href="https://eiga.com" target="_blank" rel="noopener noreferrer" className="ml-1 text-cinema-gold hover:text-cinema-gold-light transition-colors">映画.comで探す →</a>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -290,7 +291,8 @@ export function MovieForm({
                     />
                   </FormControl>
                   <FormDescription className="text-slate-500">
-                    予告編の埋め込み表示に使用されます
+                    予告編の埋め込み表示に使用されます。
+                    <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="ml-1 text-red-400 hover:text-red-300 transition-colors">YouTubeで探す →</a>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
