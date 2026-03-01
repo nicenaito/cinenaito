@@ -72,6 +72,7 @@ export function PlanDetailClient({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [emojiPickerOpenId, setEmojiPickerOpenId] = useState<string | null>(null)
+  const [pickerPos, setPickerPos] = useState<{ top: number; left: number } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -87,12 +88,19 @@ export function PlanDetailClient({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [comments.length])
 
-  // 絵文字ピッカー外クリックで閉じる
+  // 絵文字ピッカー外クリック・スクロールで閉じる
   useEffect(() => {
     if (!emojiPickerOpenId) return
-    const handleClick = () => setEmojiPickerOpenId(null)
-    document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
+    const handleClose = () => {
+      setEmojiPickerOpenId(null)
+      setPickerPos(null)
+    }
+    document.addEventListener('click', handleClose)
+    document.addEventListener('scroll', handleClose, true)
+    return () => {
+      document.removeEventListener('click', handleClose)
+      document.removeEventListener('scroll', handleClose, true)
+    }
   }, [emojiPickerOpenId])
 
   const handleRequireLogin = () => {
@@ -377,36 +385,32 @@ export function PlanDetailClient({
                     </div>
 
                     {/* Discord風 ホバーアクションツールバー */}
-                    <div className="absolute right-2 -top-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <div className={cn(
+                      'absolute right-2 -top-3 transition-opacity z-10',
+                      emojiPickerOpenId === comment.id
+                        ? 'opacity-100'
+                        : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
+                    )}>
                       <div className="flex items-center bg-cinema-surface border border-white/10 rounded-md shadow-lg">
                         {/* 絵文字ピッカートグル */}
                         <div className="relative">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              setEmojiPickerOpenId(emojiPickerOpenId === comment.id ? null : comment.id)
+                              if (emojiPickerOpenId === comment.id) {
+                                setEmojiPickerOpenId(null)
+                                setPickerPos(null)
+                              } else {
+                                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                                setPickerPos({ top: rect.top - 8, left: rect.right })
+                                setEmojiPickerOpenId(comment.id)
+                              }
                             }}
                             className="p-1.5 text-slate-400 hover:text-cinema-gold-light transition-colors"
                             title="リアクション"
                           >
                             <SmilePlus className="w-4 h-4" />
                           </button>
-                          {emojiPickerOpenId === comment.id && (
-                            <div
-                              className="absolute right-0 bottom-full mb-1 bg-cinema-surface border border-white/10 rounded-lg shadow-xl p-2 flex gap-1"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {ALLOWED_EMOJIS.map((emoji) => (
-                                <button
-                                  key={emoji}
-                                  onClick={() => handleCommentReaction(comment.id, emoji)}
-                                  className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-lg"
-                                >
-                                  {emoji}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                         <button
                           onClick={() => handleCopyComment(comment)}
@@ -486,6 +490,29 @@ export function PlanDetailClient({
           </div>
         </CardContent>
       </Card>
+
+      {/* 固定位置の絵文字ピッカー（overflow-y-autoの外に配置） */}
+      {emojiPickerOpenId && pickerPos && (
+        <div
+          className="fixed z-50 bg-cinema-surface border border-white/10 rounded-lg shadow-xl p-2 flex gap-1"
+          style={{
+            top: pickerPos.top,
+            left: pickerPos.left,
+            transform: 'translate(-100%, -100%)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {ALLOWED_EMOJIS.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => handleCommentReaction(emojiPickerOpenId, emoji)}
+              className="w-8 h-8 flex items-center justify-center rounded hover:bg-white/10 transition-colors text-lg"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
