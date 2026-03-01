@@ -229,7 +229,7 @@ export function MovieForm({
                         <SelectValue placeholder="月を選択" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="glass-card border-white/10">
+                    <SelectContent className="z-[80] border-white/20 bg-cinema-surface/95 text-white backdrop-blur-xl">
                       {monthOptions.map((option) => (
                         <SelectItem
                           key={option.value}
@@ -259,7 +259,7 @@ export function MovieForm({
                         <SelectValue placeholder="期待度を選択" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="glass-card border-white/10">
+                    <SelectContent className="z-[80] border-white/20 bg-cinema-surface/95 text-white backdrop-blur-xl">
                       <SelectItem value="絶対観る" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
                         🔥 絶対観る
                       </SelectItem>

@@ -112,12 +112,12 @@ export function DashboardClient({
   return (
     <div>
       {/* ヘッダー部分 */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <Clapperboard className="w-7 h-7 text-cinema-gold" />
           <h1 className="text-2xl font-bold text-cinema-gradient">鑑賞予定一覧</h1>
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />
           <Select
             value={sortBy}
@@ -126,7 +126,7 @@ export function DashboardClient({
               setVisibleCount(PAGE_SIZE)
             }}
           >
-            <SelectTrigger className="w-[220px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+            <SelectTrigger className="w-full sm:w-[220px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
               <SelectValue placeholder="並び順を選択" />
             </SelectTrigger>
             <SelectContent className="glass-card border-white/10">

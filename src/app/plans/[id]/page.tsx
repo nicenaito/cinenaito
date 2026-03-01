@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { Header } from '@/components/header'
+import { HeaderWithAuthData } from '@/components/header'
 import { YouTubeEmbed } from '@/components/youtube-embed'
 import { ExpectationBadge } from '@/components/expectation-badge'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,6 @@ import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
 import { ExpectationLevel } from '@/types/database.types'
-import { getIsAdmin } from '@/lib/admin'
 
 interface MoviePlanWithProfile {
   id: string
@@ -67,13 +66,13 @@ export default async function PlanDetailPage({
     params,
   ])
 
-  // 投稿・コメント・管理者判定・リアクション情報を並列取得
+  // 投稿・コメント・リアクション情報を並列取得
   const [
     { data: planData, error },
     { data: commentsData },
-    isAdmin,
     reactionResult,
     { count: reactionCount },
+    profileResult,
   ] = await Promise.all([
     supabase
       .from('movie_plans')
@@ -91,7 +90,6 @@ export default async function PlanDetailPage({
       `)
       .eq('plan_id', id)
       .order('created_at', { ascending: true }),
-    user ? getIsAdmin(supabase, user.id) : Promise.resolve(false),
     user
       ? supabase
           .from('reactions')
@@ -104,6 +102,13 @@ export default async function PlanDetailPage({
       .from('reactions')
       .select('*', { count: 'exact', head: true })
       .eq('plan_id', id),
+    user
+      ? supabase
+          .from('profiles')
+          .select('username, avatar_url, is_admin')
+          .eq('id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
 
   const comments = (commentsData as CommentWithProfile[] | null) || []
@@ -118,6 +123,15 @@ export default async function PlanDetailPage({
     : { data: null }
 
   const commentReactions = (commentReactionsData as CommentReactionData[] | null) || []
+  const profile = profileResult.data
+  const isAdmin = !!profile?.is_admin
+  const headerAuthData = user
+    ? {
+        userId: user.id,
+        fullName: user.user_metadata?.full_name ?? null,
+        profile: profile || null,
+      }
+    : null
 
   const plan = planData as MoviePlanWithProfile | null
 
@@ -135,7 +149,7 @@ export default async function PlanDetailPage({
 
   return (
     <div className="min-h-screen cinema-bg">
-      <Header />
+      <HeaderWithAuthData authData={headerAuthData} />
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-3xl mx-auto">
           <Link href="/dashboard">

@@ -14,6 +14,40 @@ type CommentInsert = Database['public']['Tables']['plan_comments']['Insert']
 type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert']
 
 const ALLOWED_EMOJIS = ['👍', '😂', '❤️', '🎬', '🔥', '👀'] as const
+const PERF_DEBUG = process.env.NODE_ENV !== 'production' || process.env.ENABLE_PERF_LOG === 'true'
+const PREVIEW_SUCCESS_TTL_MS = 10 * 60 * 1000
+const PREVIEW_FAILURE_TTL_MS = 60 * 1000
+
+type MoviePreviewResult =
+  | {
+      success: true
+      title: string
+      releaseDate: string | null
+      description: string | null
+      imageUrl: string | null
+      movieUrl: string
+    }
+  | {
+      success: false
+      error: string
+    }
+
+type PreviewCacheEntry = {
+  data: MoviePreviewResult
+  expiresAt: number
+}
+
+const previewResponseCache = new Map<string, PreviewCacheEntry>()
+
+function perfNow() {
+  return typeof performance !== 'undefined' ? performance.now() : Date.now()
+}
+
+function logPerf(action: string, start: number, meta?: Record<string, string | number | boolean>) {
+  if (!PERF_DEBUG) return
+  const durationMs = Math.round((perfNow() - start) * 10) / 10
+  console.info(`[perf] ${action}`, { durationMs, ...meta })
+}
 
 function isValidEigaUrl(rawUrl: string) {
   try {
@@ -192,18 +226,33 @@ export async function checkDuplicateMovieUrl(movieUrl: string, excludePlanId?: s
   return { isDuplicate: false }
 }
 
-export async function fetchMoviePreviewFromEiga(movieUrl: string) {
+export async function fetchMoviePreviewFromEiga(movieUrl: string): Promise<MoviePreviewResult> {
+  const perfStart = perfNow()
   if (!isValidEigaUrl(movieUrl)) {
+    logPerf('fetchMoviePreviewFromEiga', perfStart, { success: false, reason: 'invalid_url' })
     return {
-      success: false,
+      success: false as const,
       error: '映画.comの作品ページURL（https://eiga.com/movie/...）を入力してください',
     }
+  }
+
+  const now = Date.now()
+  const cached = previewResponseCache.get(movieUrl)
+  if (cached && cached.expiresAt > now) {
+    logPerf('fetchMoviePreviewFromEiga', perfStart, { success: cached.data.success, cache: 'hit' })
+    return cached.data
   }
 
   try {
     const fetched = await fetchEigaHtml(movieUrl)
     if (!fetched.success) {
-      return fetched
+      const failed: MoviePreviewResult = fetched
+      previewResponseCache.set(movieUrl, {
+        data: failed,
+        expiresAt: now + PREVIEW_FAILURE_TTL_MS,
+      })
+      logPerf('fetchMoviePreviewFromEiga', perfStart, { success: false, cache: 'miss', reason: 'fetch_failed' })
+      return failed
     }
 
     const { html } = fetched
@@ -214,16 +263,28 @@ export async function fetchMoviePreviewFromEiga(movieUrl: string) {
       null
 
     if (!rawTitle) {
-      return { success: false, error: 'タイトルを取得できませんでした' }
+      const failed: MoviePreviewResult = { success: false, error: 'タイトルを取得できませんでした' }
+      previewResponseCache.set(movieUrl, {
+        data: failed,
+        expiresAt: now + PREVIEW_FAILURE_TTL_MS,
+      })
+      logPerf('fetchMoviePreviewFromEiga', perfStart, { success: false, cache: 'miss', reason: 'title_missing' })
+      return failed
     }
 
     const title = normalizeEigaMovieTitle(rawTitle)
 
     if (!title) {
-      return { success: false, error: 'タイトルを取得できませんでした' }
+      const failed: MoviePreviewResult = { success: false, error: 'タイトルを取得できませんでした' }
+      previewResponseCache.set(movieUrl, {
+        data: failed,
+        expiresAt: now + PREVIEW_FAILURE_TTL_MS,
+      })
+      logPerf('fetchMoviePreviewFromEiga', perfStart, { success: false, cache: 'miss', reason: 'title_invalid' })
+      return failed
     }
 
-    return {
+    const success: MoviePreviewResult = {
       success: true,
       title,
       releaseDate: extractReleaseDate(html),
@@ -231,9 +292,21 @@ export async function fetchMoviePreviewFromEiga(movieUrl: string) {
       imageUrl: extractImageUrl(html, movieUrl),
       movieUrl,
     }
+    previewResponseCache.set(movieUrl, {
+      data: success,
+      expiresAt: now + PREVIEW_SUCCESS_TTL_MS,
+    })
+    logPerf('fetchMoviePreviewFromEiga', perfStart, { success: true, cache: 'miss' })
+    return success
   } catch (error) {
     console.error('映画.comプレビュー取得エラー:', error)
-    return { success: false, error: '映画情報の取得に失敗しました' }
+    const failed: MoviePreviewResult = { success: false, error: '映画情報の取得に失敗しました' }
+    previewResponseCache.set(movieUrl, {
+      data: failed,
+      expiresAt: now + PREVIEW_FAILURE_TTL_MS,
+    })
+    logPerf('fetchMoviePreviewFromEiga', perfStart, { success: false, cache: 'miss', reason: 'exception' })
+    return failed
   }
 }
 
@@ -354,10 +427,12 @@ export async function deleteMoviePlan(planId: string) {
 }
 
 export async function toggleReaction(planId: string) {
+  const perfStart = perfNow()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    logPerf('toggleReaction', perfStart, { success: false, reason: 'no_user' })
     return { success: false, reacted: false, error: '認証が必要です' }
   }
 
@@ -378,10 +453,12 @@ export async function toggleReaction(planId: string) {
       .eq('id', existingReaction.id)
 
     if (error) {
+      logPerf('toggleReaction', perfStart, { success: false, mode: 'delete' })
       return { success: false, reacted: true, error: 'リアクション解除に失敗しました' }
     }
 
     // 楽観的更新をクライアントで行うため、重い revalidate は避ける
+    logPerf('toggleReaction', perfStart, { success: true, mode: 'delete' })
     return { success: true, reacted: false }
   } else {
     // リアクションを追加
@@ -392,24 +469,29 @@ export async function toggleReaction(planId: string) {
     const { error } = await supabase.from('reactions').insert(insertData)
 
     if (error) {
+      logPerf('toggleReaction', perfStart, { success: false, mode: 'insert' })
       return { success: false, reacted: false, error: 'リアクション追加に失敗しました' }
     }
 
     // 楽観的更新をクライアントで行うため、重い revalidate は避ける
+    logPerf('toggleReaction', perfStart, { success: true, mode: 'insert' })
     return { success: true, reacted: true }
   }
 }
 
 export async function addComment(planId: string, content: string) {
+  const perfStart = perfNow()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    logPerf('addComment', perfStart, { success: false, reason: 'no_user' })
     return { success: false, error: '認証が必要です' }
   }
 
   const parsed = commentSchema.safeParse({ content })
   if (!parsed.success) {
+    logPerf('addComment', perfStart, { success: false, reason: 'validation' })
     return { success: false, error: parsed.error.issues[0]?.message || 'コメントが不正です' }
   }
 
@@ -418,15 +500,20 @@ export async function addComment(planId: string, content: string) {
     user_id: user.id,
     content: parsed.data.content,
   }
-  const { error } = await supabase.from('plan_comments').insert(insertData)
+  const { data, error } = await supabase
+    .from('plan_comments')
+    .insert(insertData)
+    .select('id, content, created_at, user_id')
+    .single()
 
   if (error) {
     console.error('コメントエラー:', error)
+    logPerf('addComment', perfStart, { success: false, reason: 'insert_error' })
     return { success: false, error: 'コメント投稿に失敗しました' }
   }
 
-  revalidatePath(`/plans/${planId}`)
-  return { success: true }
+  logPerf('addComment', perfStart, { success: true })
+  return { success: true, comment: data }
 }
 
 export async function deleteComment(commentId: string, planId: string) {
@@ -458,14 +545,17 @@ export async function deleteComment(commentId: string, planId: string) {
 }
 
 export async function toggleCommentReaction(commentId: string, emoji: string) {
+  const perfStart = perfNow()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
+    logPerf('toggleCommentReaction', perfStart, { success: false, reason: 'no_user' })
     return { success: false, reacted: false, error: '認証が必要です' }
   }
 
   if (!ALLOWED_EMOJIS.includes(emoji as typeof ALLOWED_EMOJIS[number])) {
+    logPerf('toggleCommentReaction', perfStart, { success: false, reason: 'invalid_emoji' })
     return { success: false, reacted: false, error: '無効な絵文字です' }
   }
 
@@ -485,8 +575,10 @@ export async function toggleCommentReaction(commentId: string, emoji: string) {
       .eq('id', existingReaction.id)
 
     if (error) {
+      logPerf('toggleCommentReaction', perfStart, { success: false, mode: 'delete' })
       return { success: false, reacted: true, error: 'リアクション解除に失敗しました' }
     }
+    logPerf('toggleCommentReaction', perfStart, { success: true, mode: 'delete' })
     return { success: true, reacted: false }
   } else {
     const insertData: CommentReactionInsert = {
@@ -497,8 +589,10 @@ export async function toggleCommentReaction(commentId: string, emoji: string) {
     const { error } = await supabase.from('comment_reactions').insert(insertData)
 
     if (error) {
+      logPerf('toggleCommentReaction', perfStart, { success: false, mode: 'insert' })
       return { success: false, reacted: false, error: 'リアクション追加に失敗しました' }
     }
+    logPerf('toggleCommentReaction', perfStart, { success: true, mode: 'insert' })
     return { success: true, reacted: true }
   }
 }
