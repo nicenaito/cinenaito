@@ -134,6 +134,30 @@ export interface Database {
         }
         Relationships: []
       }
+      comment_reactions: {
+        Row: {
+          id: string
+          comment_id: string
+          user_id: string
+          emoji: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          comment_id: string
+          user_id: string
+          emoji: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          comment_id?: string
+          user_id?: string
+          emoji?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       movie_plans_with_stats: {
@@ -174,4 +198,5 @@ export type Profile = Database['public']['Tables']['profiles']['Row']
 export type MoviePlan = Database['public']['Tables']['movie_plans']['Row']
 export type PlanComment = Database['public']['Tables']['plan_comments']['Row']
 export type Reaction = Database['public']['Tables']['reactions']['Row']
+export type CommentReaction = Database['public']['Tables']['comment_reactions']['Row']
 export type MoviePlanWithStats = Database['public']['Views']['movie_plans_with_stats']['Row']

@@ -11,6 +11,9 @@ type MoviePlanInsert = Database['public']['Tables']['movie_plans']['Insert']
 type MoviePlanUpdate = Database['public']['Tables']['movie_plans']['Update']
 type ReactionInsert = Database['public']['Tables']['reactions']['Insert']
 type CommentInsert = Database['public']['Tables']['plan_comments']['Insert']
+type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert']
+
+const ALLOWED_EMOJIS = ['👍', '😂', '❤️', '🎬', '🔥', '👀'] as const
 
 function isValidEigaUrl(rawUrl: string) {
   try {
@@ -452,4 +455,50 @@ export async function deleteComment(commentId: string, planId: string) {
 
   revalidatePath(`/plans/${planId}`)
   return { success: true }
+}
+
+export async function toggleCommentReaction(commentId: string, emoji: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, reacted: false, error: '認証が必要です' }
+  }
+
+  if (!ALLOWED_EMOJIS.includes(emoji as typeof ALLOWED_EMOJIS[number])) {
+    return { success: false, reacted: false, error: '無効な絵文字です' }
+  }
+
+  const { data: existing } = await supabase
+    .from('comment_reactions')
+    .select('id')
+    .eq('comment_id', commentId)
+    .eq('user_id', user.id)
+    .eq('emoji', emoji)
+    .maybeSingle()
+
+  const existingReaction = existing as { id: string } | null
+  if (existingReaction) {
+    const { error } = await supabase
+      .from('comment_reactions')
+      .delete()
+      .eq('id', existingReaction.id)
+
+    if (error) {
+      return { success: false, reacted: true, error: 'リアクション解除に失敗しました' }
+    }
+    return { success: true, reacted: false }
+  } else {
+    const insertData: CommentReactionInsert = {
+      comment_id: commentId,
+      user_id: user.id,
+      emoji,
+    }
+    const { error } = await supabase.from('comment_reactions').insert(insertData)
+
+    if (error) {
+      return { success: false, reacted: false, error: 'リアクション追加に失敗しました' }
+    }
+    return { success: true, reacted: true }
+  }
 }

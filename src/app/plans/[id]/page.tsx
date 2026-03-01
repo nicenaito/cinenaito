@@ -44,6 +44,12 @@ interface CommentWithProfile {
   } | null
 }
 
+interface CommentReactionData {
+  comment_id: string
+  emoji: string
+  user_id: string
+}
+
 export const metadata: Metadata = {
   title: '投稿詳細 - CineNaito',
 }
@@ -100,6 +106,19 @@ export default async function PlanDetailPage({
       .eq('plan_id', id),
   ])
 
+  const comments = (commentsData as CommentWithProfile[] | null) || []
+  const commentIds = comments.map(c => c.id)
+
+  // コメントのリアクション情報を取得
+  const { data: commentReactionsData } = commentIds.length > 0
+    ? await supabase
+        .from('comment_reactions')
+        .select('comment_id, emoji, user_id')
+        .in('comment_id', commentIds)
+    : { data: null }
+
+  const commentReactions = (commentReactionsData as CommentReactionData[] | null) || []
+
   const plan = planData as MoviePlanWithProfile | null
 
   if (error || !plan) {
@@ -112,7 +131,6 @@ export default async function PlanDetailPage({
     redirect('/dashboard')
   }
 
-  const comments = (commentsData as CommentWithProfile[] | null) || []
   const reaction = reactionResult.data as { id: string } | null
 
   return (
@@ -228,6 +246,7 @@ export default async function PlanDetailPage({
             initialReacted={!!reaction}
             initialReactionCount={reactionCount || 0}
             comments={comments}
+            commentReactions={commentReactions}
           />
         </div>
       </main>

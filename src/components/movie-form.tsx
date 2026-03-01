@@ -158,6 +158,7 @@ export function MovieForm({
                   </div>
                   <FormDescription className="text-slate-500">
                     まず映画.comの作品ページURLを入力し、「情報を取得」を押してください。
+                    <a href="https://eiga.com/upcoming/" target="_blank" rel="noopener noreferrer" className="ml-1 text-cinema-gold hover:text-cinema-gold-light transition-colors">映画.comで探す →</a>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -222,9 +223,9 @@ export function MovieForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-200">鑑賞予定月 *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+                      <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="月を選択" />
                       </SelectTrigger>
                     </FormControl>
@@ -252,9 +253,9 @@ export function MovieForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-slate-200">期待度 *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
-                      <SelectTrigger className="bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+                      <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
                         <SelectValue placeholder="期待度を選択" />
                       </SelectTrigger>
                     </FormControl>
@@ -290,7 +291,18 @@ export function MovieForm({
                     />
                   </FormControl>
                   <FormDescription className="text-slate-500">
-                    予告編の埋め込み表示に使用されます
+                    予告編の埋め込み表示に使用されます。
+                    <a
+                      href={currentTitle
+                        ? `https://www.youtube.com/results?search_query=${encodeURIComponent(currentTitle + ' 予告編')}`
+                        : 'https://www.youtube.com'
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-1 text-red-400 hover:text-red-300 transition-colors"
+                    >
+                      YouTubeで探す →
+                    </a>
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

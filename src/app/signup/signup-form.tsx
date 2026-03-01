@@ -15,7 +15,6 @@ export function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [username, setUsername] = useState('')
-  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -27,16 +26,10 @@ export function SignupForm() {
     setIsLoading(true)
 
     try {
-      const result = await signUpWithPassword(email, password, username)
+      const result = await signUpWithPassword(username, password)
       if (!result.success) {
         setError(result.error || '新規登録に失敗しました')
         toast.error(result.error || '新規登録に失敗しました')
-        return
-      }
-
-      if (result.needsEmailConfirmation) {
-        toast.success('登録確認メールを送信しました')
-        router.push('/login?message=check_email')
         return
       }
 
@@ -77,24 +70,11 @@ export function SignupForm() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-300">メールアドレス</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 focus:border-cinema-gold/50 focus:ring-cinema-gold/20"
-              />
-            </div>
-            <div className="space-y-2">
               <Label htmlFor="password" className="text-slate-300">パスワード</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="パスワードを入力"
+                placeholder="6文字以上のパスワード"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

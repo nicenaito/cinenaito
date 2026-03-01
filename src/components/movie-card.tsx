@@ -57,13 +57,6 @@ export const MovieCard = memo(function MovieCard({
       className="glass-card glass-card-hover overflow-hidden animate-fade-in-up"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      {/* YouTube埋め込み */}
-      {plan.youtube_url && (
-        <div className="p-4 pb-0">
-          <YouTubeEmbed url={plan.youtube_url} title={plan.title} />
-        </div>
-      )}
-
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
@@ -93,6 +86,11 @@ export const MovieCard = memo(function MovieCard({
 
         {plan.movie_url && (
           <EigaEmbedCard movieUrl={plan.movie_url} title={plan.title} />
+        )}
+
+        {/* YouTube埋め込み */}
+        {plan.youtube_url && (
+          <YouTubeEmbed url={plan.youtube_url} title={plan.title} />
         )}
 
         {/* 投稿者情報 */}
