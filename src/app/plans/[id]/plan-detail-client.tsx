@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useTransition, useRef } from 'react'
+import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { toggleReaction, addComment, deleteComment, toggleCommentReaction } from '@/app/actions'
@@ -179,7 +179,21 @@ export function PlanDetailClient({
     try {
       const result = await addComment(planId, commentText)
       if (result.success) {
-        router.refresh()
+        if (result.comment) {
+          setComments((prev) =>
+            prev.map((c) =>
+              c.id === tempId
+                ? {
+                    ...c,
+                    id: result.comment.id,
+                    content: result.comment.content,
+                    created_at: result.comment.created_at,
+                    user_id: result.comment.user_id,
+                  }
+                : c
+            )
+          )
+        }
       } else {
         setComments((prev) => prev.filter((c) => c.id !== tempId))
         setNewComment(commentText)
@@ -206,8 +220,8 @@ export function PlanDetailClient({
 
     const result = await deleteComment(commentId, planId)
     if (result.success) {
-      setComments(comments.filter((c) => c.id !== commentId))
-      setCommentReactions(commentReactions.filter((r) => r.comment_id !== commentId))
+      setComments((prev) => prev.filter((c) => c.id !== commentId))
+      setCommentReactions((prev) => prev.filter((r) => r.comment_id !== commentId))
       toast.success('コメントを削除しました')
     } else {
       toast.error(result.error)
@@ -255,21 +269,23 @@ export function PlanDetailClient({
     }
   }
 
-  // コメントのリアクション集計
-  const getReactionSummary = (commentId: string) => {
-    const reactions = commentReactions.filter((r) => r.comment_id === commentId)
-    const grouped: Record<string, { count: number; reacted: boolean }> = {}
-    for (const r of reactions) {
-      if (!grouped[r.emoji]) {
-        grouped[r.emoji] = { count: 0, reacted: false }
+  // コメントごとに1回だけ集計して、再レンダリング時の計算コストを抑える
+  const reactionSummaryByComment = useMemo(() => {
+    const summary: Record<string, Record<string, { count: number; reacted: boolean }>> = {}
+    for (const r of commentReactions) {
+      if (!summary[r.comment_id]) {
+        summary[r.comment_id] = {}
       }
-      grouped[r.emoji].count++
+      if (!summary[r.comment_id][r.emoji]) {
+        summary[r.comment_id][r.emoji] = { count: 0, reacted: false }
+      }
+      summary[r.comment_id][r.emoji].count++
       if (r.user_id === currentUserId) {
-        grouped[r.emoji].reacted = true
+        summary[r.comment_id][r.emoji].reacted = true
       }
     }
-    return grouped
-  }
+    return summary
+  }, [commentReactions, currentUserId])
 
   return (
     <div className="mt-6 space-y-6">
@@ -319,7 +335,7 @@ export function PlanDetailClient({
             {comments.length > 0 ? (
               comments.map((comment, index) => {
                 const isGrouped = shouldGroupWithPrevious(comment, comments[index - 1])
-                const reactionSummary = getReactionSummary(comment.id)
+                const reactionSummary = reactionSummaryByComment[comment.id] || {}
                 const hasReactions = Object.keys(reactionSummary).length > 0
 
                 return (
@@ -386,10 +402,10 @@ export function PlanDetailClient({
 
                     {/* Discord風 ホバーアクションツールバー */}
                     <div className={cn(
-                      'absolute right-2 -top-3 transition-opacity z-10',
+                      'absolute right-2 -top-3 z-10',
                       emojiPickerOpenId === comment.id
                         ? 'opacity-100'
-                        : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto'
+                        : 'opacity-100 sm:opacity-0 sm:pointer-events-none sm:group-hover:opacity-100 sm:group-hover:pointer-events-auto'
                     )}>
                       <div className="flex items-center bg-cinema-surface border border-white/10 rounded-md shadow-lg">
                         {/* 絵文字ピッカートグル */}
@@ -451,7 +467,7 @@ export function PlanDetailClient({
           {/* Discord風 入力エリア */}
           <div className="border-t border-white/5 pt-4">
             {isLoggedIn ? (
-              <div className="flex items-end gap-3">
+              <div className="flex items-end gap-2 sm:gap-3">
                 <div className="flex-1 relative">
                   <Textarea
                     ref={textareaRef}
@@ -468,6 +484,7 @@ export function PlanDetailClient({
                   disabled={isSubmitting || !newComment.trim()}
                   size="sm"
                   className="btn-cinema rounded-xl h-[44px] w-[44px] p-0 flex-shrink-0"
+                  aria-label="感想を送信"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

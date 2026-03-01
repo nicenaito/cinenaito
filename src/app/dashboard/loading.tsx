@@ -40,9 +40,9 @@ export default function DashboardLoading() {
             <Clapperboard className="w-7 h-7 text-cinema-gold" />
             <h1 className="text-2xl font-bold text-cinema-gradient">鑑賞予定一覧</h1>
           </div>
-          <div className="flex gap-3">
-            <div className="w-[180px] h-10 rounded-md bg-white/5 animate-pulse" />
-            <div className="w-[220px] h-10 rounded-md bg-white/5 animate-pulse" />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-[180px] h-10 rounded-md bg-white/5 animate-pulse" />
+            <div className="w-full sm:w-[220px] h-10 rounded-md bg-white/5 animate-pulse" />
           </div>
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

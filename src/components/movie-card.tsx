@@ -1,6 +1,6 @@
 'use client'
 
-import { memo } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -45,6 +45,27 @@ export const MovieCard = memo(function MovieCard({
   const isOwner = currentUserId === plan.user_id
   const canEdit = isOwner
   const canDelete = isOwner || isAdmin
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [shouldLoadEmbeds, setShouldLoadEmbeds] = useState(index < 3)
+
+  useEffect(() => {
+    if (shouldLoadEmbeds) return
+    const node = cardRef.current
+    if (!node) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoadEmbeds(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '300px' }
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [shouldLoadEmbeds])
 
   const handleDelete = async () => {
     if (!onDelete) return
@@ -54,6 +75,7 @@ export const MovieCard = memo(function MovieCard({
 
   return (
     <Card
+      ref={cardRef}
       className="glass-card glass-card-hover overflow-hidden animate-fade-in-up"
       style={{ animationDelay: `${index * 80}ms` }}
     >
@@ -84,12 +106,12 @@ export const MovieCard = memo(function MovieCard({
           </p>
         )}
 
-        {plan.movie_url && (
+        {shouldLoadEmbeds && plan.movie_url && (
           <EigaEmbedCard movieUrl={plan.movie_url} title={plan.title} />
         )}
 
         {/* YouTube埋め込み */}
-        {plan.youtube_url && (
+        {shouldLoadEmbeds && plan.youtube_url && (
           <YouTubeEmbed url={plan.youtube_url} title={plan.title} />
         )}
 

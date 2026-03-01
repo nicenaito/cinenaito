@@ -7,10 +7,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Film, Plus, LogOut, Shield, Sparkles } from 'lucide-react'
 import { Profile } from '@/types/database.types'
 
+type HeaderAuthData = {
+  userId: string
+  fullName: string | null
+  profile: Pick<Profile, 'username' | 'avatar_url' | 'is_admin'> | null
+} | null
+
 function HeaderSkeleton() {
   return (
     <header className="sticky top-0 z-50 glass-header">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+      <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <div className="relative">
             <Film className="w-6 h-6 text-cinema-gold transition-transform group-hover:scale-110" />
@@ -28,38 +34,49 @@ function HeaderSkeleton() {
   )
 }
 
-async function HeaderContent() {
-  const supabase = await createClient()
+async function HeaderContent({ authData }: { authData?: HeaderAuthData }) {
+  let resolvedAuthData = authData
 
-  // ユーザー情報とプロフィールを効率的に取得
-  const { data: { user } } = await supabase.auth.getUser()
+  if (resolvedAuthData === undefined) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  let profile: Profile | null = null
-  if (user) {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle()
-    profile = profileData as Profile | null
+    if (!user) {
+      resolvedAuthData = null
+    } else {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('username, avatar_url, is_admin')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      resolvedAuthData = {
+        userId: user.id,
+        fullName: user.user_metadata?.full_name ?? null,
+        profile: profileData as Pick<Profile, 'username' | 'avatar_url' | 'is_admin'> | null,
+      }
+    }
   }
+
+  const isLoggedIn = !!resolvedAuthData
+  const profile = resolvedAuthData?.profile ?? null
 
   return (
     <header className="sticky top-0 z-50 glass-header">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center gap-2.5 group">
+      <div className="container mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2 group min-w-0">
           <div className="relative">
             <Film className="w-6 h-6 text-cinema-gold transition-transform group-hover:scale-110" />
             <Sparkles className="w-3 h-3 text-cinema-gold-light absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-lg text-cinema-gradient leading-tight">CineNaito</span>
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-base sm:text-lg text-cinema-gradient leading-tight truncate">CineNaito</span>
             <span className="text-[10px] text-slate-400 leading-tight hidden sm:block">映画好きサークル</span>
           </div>
         </Link>
 
-        {user ? (
-          <div className="flex items-center gap-3">
+        {isLoggedIn ? (
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {profile?.is_admin && (
               <Link href="/admin/users">
                 <Button variant="outline" size="sm" className="gap-2 border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:border-emerald-400 transition-all">
@@ -69,21 +86,21 @@ async function HeaderContent() {
               </Link>
             )}
             <Link href="/new">
-              <Button size="sm" className="gap-2 btn-cinema rounded-lg">
+              <Button size="sm" className="gap-1 sm:gap-2 btn-cinema rounded-lg px-2.5 sm:px-3">
                 <Plus className="w-4 h-4" />
-                投稿
+                <span className="hidden sm:inline">投稿</span>
               </Button>
             </Link>
 
-            <div className="flex items-center gap-2.5 ml-1">
+            <div className="flex items-center gap-2 ml-0.5 sm:ml-1">
               <Avatar className="w-8 h-8 ring-2 ring-cinema-gold/20">
-                <AvatarImage src={profile?.avatar_url || user.user_metadata?.avatar_url} />
+                <AvatarImage src={profile?.avatar_url || undefined} />
                 <AvatarFallback className="bg-cinema-gold/20 text-cinema-gold text-xs font-semibold">
                   {profile?.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>
               <span className="text-sm text-slate-300 hidden sm:block font-medium">
-                {profile?.username || user.user_metadata?.full_name || 'ユーザー'}
+                {profile?.username || resolvedAuthData?.fullName || 'ユーザー'}
               </span>
             </div>
 
@@ -116,6 +133,14 @@ export function Header() {
   return (
     <Suspense fallback={<HeaderSkeleton />}>
       <HeaderContent />
+    </Suspense>
+  )
+}
+
+export function HeaderWithAuthData({ authData }: { authData: HeaderAuthData }) {
+  return (
+    <Suspense fallback={<HeaderSkeleton />}>
+      <HeaderContent authData={authData} />
     </Suspense>
   )
 }

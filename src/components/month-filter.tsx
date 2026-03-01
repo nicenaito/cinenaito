@@ -19,7 +19,7 @@ export function MonthFilter({ value, onChange }: MonthFilterProps) {
 
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-[180px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
+      <SelectTrigger className="w-full sm:w-[180px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
         <SelectValue placeholder="公開年月を選択" />
       </SelectTrigger>
       <SelectContent className="glass-card border-white/10">

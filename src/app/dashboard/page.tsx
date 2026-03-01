@@ -1,10 +1,11 @@
 import { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
-import { Header } from '@/components/header'
+import { HeaderWithAuthData } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
-import { getIsAdmin } from '@/lib/admin'
 import { getCurrentMonth, isValidYearMonth } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
+
+const DASHBOARD_FETCH_LIMIT = 60
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
@@ -29,28 +30,45 @@ export default async function DashboardPage({
     ? monthParam
     : getCurrentMonth()
 
-  // 映画予定・管理者判定・リアクション状態を並列取得
+  // 映画予定を取得
   const baseQuery = () =>
     supabase
       .from('movie_plans_with_stats')
       .select('*')
       .order('reaction_count', { ascending: false })
       .order('created_at', { ascending: false })
+      .limit(DASHBOARD_FETCH_LIMIT)
 
-  const [filteredResult, isAdmin, reactedPlanIds] = await Promise.all([
+  const [filteredResult, reactedPlanIdsResult, profileResult] = await Promise.all([
     baseQuery().or(
       `release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`
     ),
-    user ? getIsAdmin(supabase, user.id) : Promise.resolve(false),
     user
       ? supabase
           .from('reactions')
           .select('plan_id')
           .eq('user_id', user.id)
           .returns<{ plan_id: string }[]>()
-          .then(({ data }) => new Set(data?.map((r) => r.plan_id) || []))
-      : Promise.resolve(new Set<string>()),
+      : Promise.resolve({ data: [] as { plan_id: string }[] | null }),
+    user
+      ? supabase
+          .from('profiles')
+          .select('username, avatar_url, is_admin')
+          .eq('id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ])
+
+  const reactedPlanIds = new Set(reactedPlanIdsResult.data?.map((r) => r.plan_id) || [])
+  const profile = profileResult.data
+  const isAdmin = !!profile?.is_admin
+  const headerAuthData = user
+    ? {
+        userId: user.id,
+        fullName: user.user_metadata?.full_name ?? null,
+        profile: profile || null,
+      }
+    : null
 
   let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
@@ -68,7 +86,7 @@ export default async function DashboardPage({
 
   return (
     <div className="min-h-screen cinema-bg">
-      <Header />
+      <HeaderWithAuthData authData={headerAuthData} />
       <main className="container mx-auto px-4 py-8">
         <DashboardClient
           plans={plans}
