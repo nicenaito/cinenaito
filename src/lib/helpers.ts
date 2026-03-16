@@ -119,3 +119,36 @@ export function extractYearMonthFromReleaseDate(releaseDate: string | null): str
 
   return null
 }
+
+/**
+ * release_date からソート可能な YYYY-MM-DD 文字列を抽出
+ * 日付が取れない場合は月初日（01）にフォールバック
+ */
+export function extractSortableDateFromReleaseDate(releaseDate: string | null): string | null {
+  if (!releaseDate) return null
+
+  const isoFull = releaseDate.match(/^(\d{4}-\d{2}-\d{2})$/)
+  if (isoFull) return isoFull[1]
+
+  const isoMonthOnly = releaseDate.match(/^(\d{4}-\d{2})$/)
+  if (isoMonthOnly) return `${isoMonthOnly[1]}-01`
+
+  const slashDate = releaseDate.match(/^(\d{4})\/(\d{1,2})(?:\/(\d{1,2}))?$/)
+  if (slashDate) {
+    const month = slashDate[2].padStart(2, '0')
+    const day = slashDate[3] ? slashDate[3].padStart(2, '0') : '01'
+    return `${slashDate[1]}-${month}-${day}`
+  }
+
+  const jpFull = releaseDate.match(/(\d{4})年\s*(\d{1,2})月\s*(\d{1,2})日/)
+  if (jpFull) {
+    return `${jpFull[1]}-${jpFull[2].padStart(2, '0')}-${jpFull[3].padStart(2, '0')}`
+  }
+
+  const jpMonth = releaseDate.match(/(\d{4})年\s*(\d{1,2})月/)
+  if (jpMonth) {
+    return `${jpMonth[1]}-${jpMonth[2].padStart(2, '0')}-01`
+  }
+
+  return null
+}

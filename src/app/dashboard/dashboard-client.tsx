@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
+import { extractSortableDateFromReleaseDate } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
 import {
@@ -78,32 +79,31 @@ export function DashboardClient({
 
   const displayedItems = useMemo(() => {
     const sorted = [...planItems]
-    if (sortBy === 'reaction_desc') {
-      sorted.sort((a, b) => {
-        if (b.reaction_count !== a.reaction_count) {
-          return b.reaction_count - a.reaction_count
-        }
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      })
-    }
-
-    if (sortBy === 'newest') {
-      sorted.sort(
-        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )
-    }
-
-    if (sortBy === 'release_asc') {
-      sorted.sort((a, b) => {
-        const aReleaseMonth = a.release_month || a.target_month
-        const bReleaseMonth = b.release_month || b.target_month
-        if (aReleaseMonth === bReleaseMonth) {
+    switch (sortBy) {
+      case 'reaction_desc':
+        sorted.sort((a, b) => {
+          if (b.reaction_count !== a.reaction_count) {
+            return b.reaction_count - a.reaction_count
+          }
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        }
-        return aReleaseMonth.localeCompare(bReleaseMonth)
-      })
+        })
+        break
+      case 'newest':
+        sorted.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )
+        break
+      case 'release_asc':
+        sorted.sort((a, b) => {
+          const aDate = extractSortableDateFromReleaseDate(a.release_date) ?? a.target_month
+          const bDate = extractSortableDateFromReleaseDate(b.release_date) ?? b.target_month
+          if (aDate === bDate) {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          }
+          return aDate.localeCompare(bDate)
+        })
+        break
     }
-
     return sorted
   }, [planItems, sortBy])
 
