@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
@@ -15,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Film, Clapperboard, CircleHelp } from 'lucide-react'
+import { Film, Clapperboard } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'reaction_desc' | 'newest' | 'release_asc'
@@ -125,16 +124,6 @@ export function DashboardClient({
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />
-          <Link href="/guide">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full sm:w-auto border-white/10 text-slate-300 hover:text-cinema-gold-light hover:border-cinema-gold/30 transition-colors"
-            >
-              <CircleHelp className="w-4 h-4 mr-2" />
-              使い方
-            </Button>
-          </Link>
           <Select
             value={sortBy}
             onValueChange={(value: SortOption) => {
