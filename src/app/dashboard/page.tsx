@@ -9,7 +9,7 @@ const DASHBOARD_FETCH_LIMIT = 60
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
-  description: '映画鑑賞予定一覧',
+  description: '映画公開予定一覧',
 }
 
 export default async function DashboardPage({

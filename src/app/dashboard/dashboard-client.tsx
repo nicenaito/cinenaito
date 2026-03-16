@@ -121,7 +121,7 @@ export function DashboardClient({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
           <Clapperboard className="w-7 h-7 text-cinema-gold" />
-          <h1 className="text-2xl font-bold text-cinema-gradient">鑑賞予定一覧</h1>
+          <h1 className="text-2xl font-bold text-cinema-gradient">公開予定一覧</h1>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />

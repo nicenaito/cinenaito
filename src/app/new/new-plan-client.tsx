@@ -16,7 +16,7 @@ export function NewPlanClient() {
     try {
       const result = await createMoviePlan(data)
       if (result.success) {
-        toast.success('映画鑑賞予定を登録しました！')
+        toast.success('映画情報を登録しました！')
         router.push('/dashboard')
       } else {
         toast.error(result.error || '登録に失敗しました')

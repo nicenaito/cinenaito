@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { moviePlanSchema, MoviePlanFormData } from '@/lib/validations'
-import { generateMonthOptions, getCurrentMonth } from '@/lib/helpers'
+import { extractYearMonthFromReleaseDate, getCurrentMonth } from '@/lib/helpers'
 import { fetchMovieInfoFromEiga, checkDuplicateMovieUrl } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -46,7 +46,6 @@ export function MovieForm({
   submitLabel = '登録する',
   editingPlanId,
 }: MovieFormProps) {
-  const monthOptions = generateMonthOptions()
   const [isFetchingInfo, setIsFetchingInfo] = useState(false)
   const [duplicateInfo, setDuplicateInfo] = useState<{ planId: string; title: string } | null>(null)
 
@@ -108,6 +107,13 @@ export function MovieForm({
   const currentTitle = form.watch('title')
   const currentReleaseDate = form.watch('release_date')
 
+  useEffect(() => {
+    const derivedMonth = extractYearMonthFromReleaseDate(currentReleaseDate || null)
+    if (!derivedMonth) return
+    if (form.getValues('target_month') === derivedMonth) return
+    form.setValue('target_month', derivedMonth, { shouldDirty: true, shouldValidate: true })
+  }, [currentReleaseDate, form])
+
   return (
     <Card className="glass-card border-white/10">
       <CardHeader>
@@ -119,7 +125,7 @@ export function MovieForm({
       <CardContent>
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <input type="hidden" {...form.register('release_date')} />
+            <input type="hidden" {...form.register('target_month')} />
 
             {/* 映画.com URL */}
             <FormField
@@ -216,31 +222,25 @@ export function MovieForm({
               )}
             />
 
-            {/* 対象月 */}
+            {/* 公開日（自動入力） */}
             <FormField
               control={form.control}
-              name="target_month"
+              name="release_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-slate-200">鑑賞予定月 *</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger className="w-full bg-white/5 border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
-                        <SelectValue placeholder="月を選択" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="z-[80] border-white/20 bg-cinema-surface/95 text-white backdrop-blur-xl">
-                      {monthOptions.map((option) => (
-                        <SelectItem
-                          key={option.value}
-                          value={option.value}
-                          className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white"
-                        >
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-slate-200">公開日（自動入力）</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      readOnly
+                      placeholder="「情報を取得」を押すと自動入力されます"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-slate-500"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-slate-500">
+                    公開日は映画.comの情報取得結果を反映します。
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -28,7 +28,7 @@ export default function GuidePage() {
               <CardTitle className="text-cinema-gradient text-2xl">CineNaitoの使い方</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-slate-300">
-              <p>映画の鑑賞予定を共有し、みんなの反応や感想を楽しむためのガイドです。</p>
+              <p>映画の公開情報を共有し、みんなの反応や感想を楽しむためのガイドです。</p>
               <p>まずはログイン後、ダッシュボードから気になる映画を投稿してみましょう。</p>
             </CardContent>
           </Card>
@@ -42,7 +42,7 @@ export default function GuidePage() {
             </CardHeader>
             <CardContent className="space-y-2 text-slate-300">
               <p>「投稿」から映画.comのURLを入力し、作品情報を取得します。</p>
-              <p>必要に応じてタイトルやコメントを調整し、鑑賞予定月と期待度を選んで登録します。</p>
+              <p>必要に応じてタイトルやコメントを調整し、公開日情報と期待度を確認して登録します。</p>
             </CardContent>
           </Card>
 
@@ -80,7 +80,7 @@ export default function GuidePage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-slate-300">
-              <p>月フィルタを切り替えると、その月に公開される映画や鑑賞予定をすぐ確認できます。</p>
+              <p>月フィルタを切り替えると、その月に公開される映画をすぐ確認できます。</p>
               <p>投稿詳細から編集や削除も可能です（管理者は他ユーザー投稿も管理できます）。</p>
             </CardContent>
           </Card>

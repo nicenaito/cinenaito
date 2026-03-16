@@ -45,6 +45,7 @@ export const MovieCard = memo(function MovieCard({
   const isOwner = currentUserId === plan.user_id
   const canEdit = isOwner
   const canDelete = isOwner || isAdmin
+  const releaseMonth = plan.release_month || plan.target_month
   const cardRef = useRef<HTMLDivElement>(null)
   const [shouldLoadEmbeds, setShouldLoadEmbeds] = useState(index < 3)
 
@@ -86,7 +87,7 @@ export const MovieCard = memo(function MovieCard({
               {plan.title}
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              {formatMonth(plan.target_month)} の予定
+              {formatMonth(releaseMonth)} 公開予定
             </p>
             {plan.release_date && (
               <p className="text-xs text-slate-400 mt-1">公開日: {plan.release_date}</p>
