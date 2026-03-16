@@ -1,7 +1,8 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
 import { toggleReaction, deleteMoviePlan } from '@/app/actions'
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Film, Clapperboard } from 'lucide-react'
+import { Film, Clapperboard, CircleHelp } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'reaction_desc' | 'newest' | 'release_asc'
@@ -39,9 +40,14 @@ export function DashboardClient({
 }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const [planItems, setPlanItems] = useState(plans)
   const [sortBy, setSortBy] = useState<SortOption>('reaction_desc')
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
+
+  useEffect(() => {
+    setPlanItems(plans)
+  }, [plans])
 
   const handleMonthChange = useCallback((value: string) => {
     setVisibleCount(PAGE_SIZE)
@@ -68,11 +74,11 @@ export function DashboardClient({
       alert(result.error || '削除に失敗しました')
       return
     }
-    router.refresh()
-  }, [router])
+    setPlanItems((current) => current.filter((plan) => plan.id !== planId))
+  }, [])
 
   const displayedItems = useMemo(() => {
-    const sorted = [...plans]
+    const sorted = [...planItems]
     if (sortBy === 'reaction_desc') {
       sorted.sort((a, b) => {
         if (b.reaction_count !== a.reaction_count) {
@@ -100,7 +106,7 @@ export function DashboardClient({
     }
 
     return sorted
-  }, [plans, sortBy])
+  }, [planItems, sortBy])
 
   const visibleItems = useMemo(
     () => displayedItems.slice(0, visibleCount),
@@ -119,6 +125,16 @@ export function DashboardClient({
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />
+          <Link href="/guide">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto border-white/10 text-slate-300 hover:text-cinema-gold-light hover:border-cinema-gold/30 transition-colors"
+            >
+              <CircleHelp className="w-4 h-4 mr-2" />
+              使い方
+            </Button>
+          </Link>
           <Select
             value={sortBy}
             onValueChange={(value: SortOption) => {
