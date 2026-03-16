@@ -109,9 +109,9 @@ export function MovieForm({
 
   useEffect(() => {
     const derivedMonth = extractYearMonthFromReleaseDate(currentReleaseDate || null)
-    if (!derivedMonth) return
-    if (form.getValues('target_month') === derivedMonth) return
-    form.setValue('target_month', derivedMonth, { shouldDirty: true, shouldValidate: true })
+    const month = derivedMonth ?? getCurrentMonth()
+    if (form.getValues('target_month') === month) return
+    form.setValue('target_month', month, { shouldDirty: true, shouldValidate: true })
   }, [currentReleaseDate, form])
 
   return (
