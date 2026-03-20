@@ -9,13 +9,13 @@ const DASHBOARD_FETCH_LIMIT = 60
 
 export const metadata: Metadata = {
   title: 'ダッシュボード - CineNaito',
-  description: '映画鑑賞予定一覧',
+  description: '映画公開予定一覧',
 }
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; sort?: string }>
 }) {
   const supabase = await createClient()
 
@@ -30,19 +30,28 @@ export default async function DashboardPage({
     ? monthParam
     : getCurrentMonth()
 
+  const sortParam = params.sort as 'newest' | 'release_asc' | undefined
+  const initialSortBy = sortParam || 'release_asc'
+
   // 映画予定を取得
-  const baseQuery = () =>
-    supabase
-      .from('movie_plans_with_stats')
-      .select('*')
-      .order('reaction_count', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_FETCH_LIMIT)
+  const baseQuery = supabase
+    .from('movie_plans_with_stats')
+    .select('*')
+    .or(`release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`)
+
+  let q = baseQuery
+  if (initialSortBy === 'newest') {
+    q = q.order('created_at', { ascending: false })
+  } else {
+    // release_asc (default)
+    q = q.order('release_month', { ascending: true, nullsFirst: false })
+         .order('target_month', { ascending: true })
+         .order('created_at', { ascending: false })
+  }
+  q = q.limit(DASHBOARD_FETCH_LIMIT)
 
   const [filteredResult, reactedPlanIdsResult, profileResult] = await Promise.all([
-    baseQuery().or(
-      `release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`
-    ),
+    q,
     user
       ? supabase
           .from('reactions')
@@ -73,7 +82,11 @@ export default async function DashboardPage({
   let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
     console.error('データ取得エラー（release_month フィルタ）:', filteredResult.error)
-    const fallbackResult = await baseQuery().eq('target_month', selectedMonth)
+    const fallbackResult = await supabase
+      .from('movie_plans_with_stats')
+      .select('*')
+      .eq('target_month', selectedMonth)
+      .limit(DASHBOARD_FETCH_LIMIT)
     if (fallbackResult.error) {
       console.error('データ取得エラー（fallback）:', fallbackResult.error)
       plans = []
@@ -95,6 +108,7 @@ export default async function DashboardPage({
           isAdmin={isAdmin}
           isLoggedIn={!!user}
           reactedPlanIds={Array.from(reactedPlanIds)}
+          initialSortBy={initialSortBy}
         />
       </main>
     </div>

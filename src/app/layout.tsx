@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CineNaito - 映画鑑賞予定共有アプリ",
-  description: "月ごとに鑑賞予定の映画を共有し、ユーザー間でリアクションやコメントができるソーシャルサービス",
+  title: "CineNaito - 映画公開予定共有アプリ",
+  description: "月ごとに公開予定の映画を共有し、ユーザー間でリアクションやコメントができるソーシャルサービス",
 };
 
 export default function RootLayout({

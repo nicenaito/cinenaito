@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Film, Plus, LogOut, Shield, Sparkles } from 'lucide-react'
+import { Film, LogOut, Shield, Sparkles, CircleHelp } from 'lucide-react'
 import { Profile } from '@/types/database.types'
 
 type HeaderAuthData = {
@@ -85,10 +85,10 @@ async function HeaderContent({ authData }: { authData?: HeaderAuthData }) {
                 </Button>
               </Link>
             )}
-            <Link href="/new">
-              <Button size="sm" className="gap-1 sm:gap-2 btn-cinema rounded-lg px-2.5 sm:px-3">
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">投稿</span>
+            <Link href="/guide">
+              <Button variant="ghost" size="sm" className="gap-1 text-slate-400 hover:text-cinema-gold transition-colors">
+                <CircleHelp className="w-4 h-4" />
+                <span className="hidden sm:inline">使い方</span>
               </Button>
             </Link>
 

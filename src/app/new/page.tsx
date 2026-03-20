@@ -9,7 +9,7 @@ import { ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: '新規投稿 - CineNaito',
-  description: '映画鑑賞予定を投稿',
+  description: '映画情報を投稿',
 }
 
 export default async function NewPlanPage() {

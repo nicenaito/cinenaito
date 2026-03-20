@@ -38,7 +38,7 @@ export default function DashboardLoading() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-3">
             <Clapperboard className="w-7 h-7 text-cinema-gold" />
-            <h1 className="text-2xl font-bold text-cinema-gradient">鑑賞予定一覧</h1>
+            <h1 className="text-2xl font-bold text-cinema-gradient">公開予定一覧</h1>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <div className="w-full sm:w-[180px] h-10 rounded-md bg-white/5 animate-pulse" />
