@@ -2,12 +2,13 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { MovieCard } from '@/components/movie-card'
+import { MovieListItem } from '@/components/movie-list-item'
 import { MonthFilter } from '@/components/month-filter'
-import { toggleReaction, deleteMoviePlan } from '@/app/actions'
+import { toggleReaction, deleteMoviePlan, updateViewMode } from '@/app/actions'
 import { extractSortableDateFromReleaseDate } from '@/lib/helpers'
-import { MoviePlanWithStats } from '@/types/database.types'
+import { MoviePlanWithStats, ViewMode } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -16,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Film, Clapperboard, Plus } from 'lucide-react'
+import { Film, Clapperboard, Plus, LayoutGrid, List } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'release_asc' | 'newest'
@@ -30,6 +31,7 @@ interface DashboardClientProps {
   isLoggedIn: boolean
   reactedPlanIds: string[]
   initialSortBy?: SortOption
+  initialViewMode?: ViewMode
 }
 
 export function DashboardClient({
@@ -40,12 +42,15 @@ export function DashboardClient({
   isLoggedIn,
   reactedPlanIds,
   initialSortBy = 'release_asc',
+  initialViewMode = 'card',
 }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [planItems, setPlanItems] = useState(plans)
   const [sortBy, setSortBy] = useState<SortOption>(initialSortBy)
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+  const [, startTransition] = useTransition()
   const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
 
   useEffect(() => {
@@ -56,6 +61,15 @@ export function DashboardClient({
     setVisibleCount(PAGE_SIZE)
     router.push(`/dashboard?month=${value}&sort=${sortBy}`)
   }, [router, sortBy])
+
+  const handleViewModeChange = useCallback((mode: ViewMode) => {
+    setViewMode(mode)
+    if (isLoggedIn) {
+      startTransition(() => {
+        updateViewMode(mode)
+      })
+    }
+  }, [isLoggedIn, startTransition])
 
   const handleRequireLogin = useCallback(() => {
     toast.error('リアクションにはログインが必要です')
@@ -147,10 +161,37 @@ export function DashboardClient({
               </SelectItem>
             </SelectContent>
           </Select>
+          {/* 表示切替トグル */}
+          <div className="flex glass-card border-white/10 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('card')}
+              className={`flex items-center justify-center w-10 h-10 transition-colors ${
+                viewMode === 'card'
+                  ? 'bg-cinema-gold/20 text-cinema-gold'
+                  : 'text-slate-400 hover:text-cinema-gold-light hover:bg-white/5'
+              }`}
+              title="カード表示"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleViewModeChange('list')}
+              className={`flex items-center justify-center w-10 h-10 transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-cinema-gold/20 text-cinema-gold'
+                  : 'text-slate-400 hover:text-cinema-gold-light hover:bg-white/5'
+              }`}
+              title="一覧表示"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 映画カード一覧 */}
+      {/* 映画一覧 */}
       {displayedItems.length === 0 ? (
         <div className="text-center py-20">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full glass-card mb-6">
@@ -163,11 +204,42 @@ export function DashboardClient({
             別の年月を選択するか、新しく投稿してみましょう。
           </p>
         </div>
-      ) : (
+      ) : viewMode === 'card' ? (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {visibleItems.map((plan, i) => (
               <MovieCard
+                key={plan.id}
+                plan={plan}
+                currentUserId={currentUserId}
+                isAdmin={isAdmin}
+                isLoggedIn={isLoggedIn}
+                userReacted={reactedPlanIdSet.has(plan.id)}
+                onReaction={handleReaction}
+                onRequireLogin={handleRequireLogin}
+                onDelete={handleDelete}
+                index={i}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
+                className="border-white/10 text-slate-300 hover:text-cinema-gold-light hover:border-cinema-gold/30 transition-colors"
+              >
+                もっと見る ({visibleItems.length}/{displayedItems.length})
+              </Button>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2">
+            {visibleItems.map((plan, i) => (
+              <MovieListItem
                 key={plan.id}
                 plan={plan}
                 currentUserId={currentUserId}

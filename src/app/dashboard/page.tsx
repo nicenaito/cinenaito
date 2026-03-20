@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { HeaderWithAuthData } from '@/components/header'
 import { DashboardClient } from './dashboard-client'
 import { getCurrentMonth, isValidYearMonth } from '@/lib/helpers'
-import { MoviePlanWithStats } from '@/types/database.types'
+import { MoviePlanWithStats, ViewMode } from '@/types/database.types'
 
 const DASHBOARD_FETCH_LIMIT = 60
 
@@ -62,7 +62,7 @@ export default async function DashboardPage({
     user
       ? supabase
           .from('profiles')
-          .select('username, avatar_url, is_admin')
+          .select('username, avatar_url, is_admin, view_mode')
           .eq('id', user.id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -71,6 +71,7 @@ export default async function DashboardPage({
   const reactedPlanIds = new Set(reactedPlanIdsResult.data?.map((r) => r.plan_id) || [])
   const profile = profileResult.data
   const isAdmin = !!profile?.is_admin
+  const initialViewMode: ViewMode = (profile?.view_mode === 'list') ? 'list' : 'card'
   const headerAuthData = user
     ? {
         userId: user.id,
@@ -109,6 +110,7 @@ export default async function DashboardPage({
           isLoggedIn={!!user}
           reactedPlanIds={Array.from(reactedPlanIds)}
           initialSortBy={initialSortBy}
+          initialViewMode={initialViewMode}
         />
       </main>
     </div>

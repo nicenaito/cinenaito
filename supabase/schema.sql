@@ -19,6 +19,7 @@ CREATE TABLE profiles (
   avatar_url TEXT,
   discord_id TEXT UNIQUE,
   is_admin BOOLEAN NOT NULL DEFAULT false,
+  view_mode TEXT NOT NULL DEFAULT 'card',
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );

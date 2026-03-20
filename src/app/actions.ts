@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { MoviePlanFormData, commentSchema } from '@/lib/validations'
-import { Database } from '@/types/database.types'
+import { Database, ViewMode } from '@/types/database.types'
 import { getIsAdmin } from '@/lib/admin'
 import { extractYearMonthFromReleaseDate } from '@/lib/helpers'
 
@@ -595,4 +595,29 @@ export async function toggleCommentReaction(commentId: string, emoji: string) {
     logPerf('toggleCommentReaction', perfStart, { success: true, mode: 'insert' })
     return { success: true, reacted: true }
   }
+}
+
+export async function updateViewMode(viewMode: ViewMode) {
+  const perfStart = perfNow()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    return { success: false, error: 'ログインが必要です' }
+  }
+
+  if (viewMode !== 'card' && viewMode !== 'list') {
+    return { success: false, error: '無効な表示モードです' }
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ view_mode: viewMode })
+    .eq('id', user.id)
+
+  if (error) {
+    logPerf('updateViewMode', perfStart, { success: false })
+    return { success: false, error: '表示モードの保存に失敗しました' }
+  }
+  logPerf('updateViewMode', perfStart, { success: true, viewMode })
+  return { success: true }
 }

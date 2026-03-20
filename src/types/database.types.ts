@@ -6,6 +6,8 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type ViewMode = 'card' | 'list'
+
 export type ExpectationLevel = '絶対観る' | '時間が合えば' | '気にはなっている'
 
 export interface Database {
@@ -18,6 +20,7 @@ export interface Database {
           avatar_url: string | null
           discord_id: string | null
           is_admin: boolean
+          view_mode: string
           created_at: string
           updated_at: string
         }
@@ -27,6 +30,7 @@ export interface Database {
           avatar_url?: string | null
           discord_id?: string | null
           is_admin?: boolean
+          view_mode?: string
           created_at?: string
           updated_at?: string
         }
@@ -36,6 +40,7 @@ export interface Database {
           avatar_url?: string | null
           discord_id?: string | null
           is_admin?: boolean
+          view_mode?: string
           created_at?: string
           updated_at?: string
         }
