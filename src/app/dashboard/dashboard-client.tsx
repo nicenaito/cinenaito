@@ -28,6 +28,7 @@ interface DashboardClientProps {
   isAdmin?: boolean
   isLoggedIn: boolean
   reactedPlanIds: string[]
+  initialSortBy?: SortOption
 }
 
 export function DashboardClient({
@@ -37,11 +38,12 @@ export function DashboardClient({
   isAdmin = false,
   isLoggedIn,
   reactedPlanIds,
+  initialSortBy = 'reaction_desc',
 }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [planItems, setPlanItems] = useState(plans)
-  const [sortBy, setSortBy] = useState<SortOption>('reaction_desc')
+  const [sortBy, setSortBy] = useState<SortOption>(initialSortBy)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
 
@@ -51,8 +53,8 @@ export function DashboardClient({
 
   const handleMonthChange = useCallback((value: string) => {
     setVisibleCount(PAGE_SIZE)
-    router.push(`/dashboard?month=${value}`)
-  }, [router])
+    router.push(`/dashboard?month=${value}&sort=${sortBy}`)
+  }, [router, sortBy])
 
   const handleRequireLogin = useCallback(() => {
     toast.error('リアクションにはログインが必要です')
@@ -129,6 +131,7 @@ export function DashboardClient({
             onValueChange={(value: SortOption) => {
               setSortBy(value)
               setVisibleCount(PAGE_SIZE)
+              router.push(`/dashboard?month=${selectedMonth}&sort=${value}`)
             }}
           >
             <SelectTrigger className="w-full sm:w-[220px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">

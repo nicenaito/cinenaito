@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>
+  searchParams: Promise<{ month?: string; sort?: string }>
 }) {
   const supabase = await createClient()
 
@@ -30,14 +30,25 @@ export default async function DashboardPage({
     ? monthParam
     : getCurrentMonth()
 
+  const sortParam = params.sort as 'reaction_desc' | 'newest' | 'release_asc' | undefined
+  const initialSortBy = sortParam || 'reaction_desc'
+
   // 映画予定を取得
-  const baseQuery = () =>
-    supabase
-      .from('movie_plans_with_stats')
-      .select('*')
-      .order('reaction_count', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(DASHBOARD_FETCH_LIMIT)
+  const baseQuery = () => {
+    let q = supabase.from('movie_plans_with_stats').select('*').limit(DASHBOARD_FETCH_LIMIT)
+    
+    if (initialSortBy === 'newest') {
+      q = q.order('created_at', { ascending: false })
+    } else if (initialSortBy === 'release_asc') {
+      q = q.order('release_month', { ascending: true, nullsFirst: false })
+           .order('target_month', { ascending: true })
+           .order('created_at', { ascending: false })
+    } else {
+      q = q.order('reaction_count', { ascending: false })
+           .order('created_at', { ascending: false })
+    }
+    return q
+  }
 
   const [filteredResult, reactedPlanIdsResult, profileResult] = await Promise.all([
     baseQuery().or(
@@ -95,6 +106,7 @@ export default async function DashboardPage({
           isAdmin={isAdmin}
           isLoggedIn={!!user}
           reactedPlanIds={Array.from(reactedPlanIds)}
+          initialSortBy={initialSortBy}
         />
       </main>
     </div>
