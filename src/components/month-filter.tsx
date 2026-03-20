@@ -22,7 +22,7 @@ export function MonthFilter({ value, onChange }: MonthFilterProps) {
       <SelectTrigger className="w-full sm:w-[180px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
         <SelectValue placeholder="公開年月を選択" />
       </SelectTrigger>
-      <SelectContent className="glass-card border-white/10">
+      <SelectContent className="z-[60] bg-cinema-surface/95 border-white/10 text-white backdrop-blur-xl">
         {monthOptions.map((option) => (
           <SelectItem
             key={option.value}

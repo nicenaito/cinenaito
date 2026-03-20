@@ -129,7 +129,7 @@ export function DashboardClient({
             <SelectTrigger className="w-full sm:w-[220px] glass-card border-white/10 text-white hover:border-cinema-gold/30 transition-colors">
               <SelectValue placeholder="並び順を選択" />
             </SelectTrigger>
-            <SelectContent className="glass-card border-white/10">
+            <SelectContent className="z-[60] bg-cinema-surface/95 border-white/10 text-white backdrop-blur-xl">
               <SelectItem value="release_asc" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
                 公開日順
               </SelectItem>

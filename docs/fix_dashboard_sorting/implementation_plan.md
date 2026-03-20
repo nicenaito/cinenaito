@@ -9,4 +9,8 @@
    - `SortOption` 型から `reaction_desc` を削除。
    - `initialSortBy` のデフォルトを `release_asc` に変更。
    - `Select` の選択肢を「公開日順」と「投稿順」に簡略化。
+   - `SelectContent` の `className` を `bg-cinema-surface/95` と `z-[60]` に更新。
    - クライアントサイドでのソートロジックからも `reaction_desc` のケースを削除。
+
+3. **共通コンポーネントの調整 (`src/components/month-filter.tsx`)**
+   - `SelectContent` に `bg-cinema-surface/95` と `z-[60]` を追加し、視認性を向上させる。
