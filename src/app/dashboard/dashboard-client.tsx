@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
@@ -15,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Film, Clapperboard } from 'lucide-react'
+import { Film, Clapperboard, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'release_asc' | 'newest'
@@ -117,6 +118,14 @@ export function DashboardClient({
           <h1 className="text-2xl font-bold text-cinema-gradient">公開予定一覧</h1>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          {isLoggedIn && (
+            <Link href="/new" className="hidden sm:block">
+              <Button size="default" className="gap-2 btn-cinema rounded-lg px-6 shadow-lg shadow-cinema-gold/20">
+                <Plus className="w-5 h-5" />
+                <span className="font-bold">投稿する</span>
+              </Button>
+            </Link>
+          )}
           <MonthFilter value={selectedMonth} onChange={handleMonthChange} />
           <Select
             value={sortBy}
@@ -185,6 +194,17 @@ export function DashboardClient({
             </div>
           )}
         </>
+      )}
+
+      {/* モバイル用浮遊投稿ボタン */}
+      {isLoggedIn && (
+        <div className="fixed bottom-8 right-6 z-40 sm:hidden">
+          <Link href="/new">
+            <Button size="lg" className="w-14 h-14 rounded-full p-0 btn-cinema shadow-[0_8px_32px_rgba(212,168,83,0.4)] border border-white/20">
+              <Plus className="w-8 h-8" />
+            </Button>
+          </Link>
+        </div>
       )}
     </div>
   )
