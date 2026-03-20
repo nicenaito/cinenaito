@@ -53,7 +53,7 @@ export default function GuidePage() {
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="space-y-4 text-slate-300 leading-relaxed">
                 <p>ヘッダーの「投稿」ボタンから、映画.com の作品URLを貼り付けるだけで、タイトルや画像を自動取得します。</p>
-                <ul className="space-y-2 list-disc list-inside text-sm">
+                <ul className="space-y-2 list-disc list-inside text-base">
                   <li>URLを入力して「取得」ボタンをクリック</li>
                   <li>期待度（🔥 絶対観る！など）を選択</li>
                   <li>一言コメントを添えて登録完了！</li>
@@ -142,14 +142,14 @@ export default function GuidePage() {
                     </div>
                   </div>
                   <div className="bg-white/5 rounded-lg p-3 border border-white/5">
-                    <p className="text-[10px] text-slate-400">これ、予告編から最高でしたね！</p>
+                    <p className="text-xs text-slate-400">これ、予告編から最高でしたね！</p>
                     <div className="flex gap-1 mt-2">
-                      <div className="px-1.5 py-0.5 bg-white/5 rounded text-[10px]">🔥 3</div>
-                      <div className="px-1.5 py-0.5 bg-white/5 rounded text-[10px]">👏 1</div>
+                      <div className="px-1.5 py-0.5 bg-white/5 rounded text-xs">🔥 3</div>
+                      <div className="px-1.5 py-0.5 bg-white/5 rounded text-xs">👏 1</div>
                     </div>
                   </div>
                   <div className="flex justify-center pt-2">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cinema-gold/10 border border-cinema-gold/40 text-cinema-gold font-bold text-xs group-hover:bg-cinema-gold/20 transition-colors">
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cinema-gold/10 border border-cinema-gold/40 text-cinema-gold font-bold text-sm group-hover:bg-cinema-gold/20 transition-colors">
                       <ThumbsUp className="w-3 h-3" />
                       自分も観る！
                     </div>
@@ -168,19 +168,19 @@ export default function GuidePage() {
               <div className="flex gap-4 items-start">
                 <Sparkles className="w-6 h-6 text-cinema-gold shrink-0 mt-1" />
                 <div className="space-y-3">
-                  <h3 className="text-xl font-bold text-cinema-gold">知っていると便利な機能</h3>
+                  <h3 className="text-2xl font-bold text-cinema-gold">知っていると便利な機能</h3>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <p className="text-slate-200 font-semibold text-sm flex items-center gap-1">
+                      <p className="text-slate-200 font-semibold text-base flex items-center gap-1">
                         <ChevronRight className="w-3 h-3" /> URLの自動取得
                       </p>
-                      <p className="text-xs text-slate-400">映画.com 以外の URL でも、可能な限り情報を読み取ります。</p>
+                      <p className="text-sm text-slate-400">映画.com 以外の URL でも、可能な限り情報を読み取ります。</p>
                     </div>
                     <div className="space-y-1">
-                      <p className="text-slate-200 font-semibold text-sm flex items-center gap-1">
+                      <p className="text-slate-200 font-semibold text-base flex items-center gap-1">
                         <ChevronRight className="w-3 h-3" /> 管理者機能
                       </p>
-                      <p className="text-xs text-slate-400">間違えて投稿しても、管理者ならいつでも整理が可能です。</p>
+                      <p className="text-sm text-slate-400">間違えて投稿しても、管理者ならいつでも整理が可能です。</p>
                     </div>
                   </div>
                 </div>
