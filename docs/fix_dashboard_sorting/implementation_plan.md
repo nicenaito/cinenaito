@@ -1,11 +1,12 @@
 # 実装計画
 
-1. **サーバーサイドのソート対応 (`src/app/dashboard/page.tsx`)**
-   - URLパラメータ (`searchParams.sort`) を受け取る。
-   - クエリパラメータの値 (`newest`, `release_asc`, `reaction_desc`) に応じて Supabase クエリの `.order()` を切り替える。
-   - `release_date` は文字列のため正確なソートが難しいが、`release_month` での大まかなソートを適用しつつ、細かいソートは既存のクライアントサイドロジックで行うよう組み合わせる。
+1. **サーバーサイドのクエリ修正 (`src/app/dashboard/page.tsx`)**
+   - URLパラメータ (`sort`) を取得し、デフォルトを `release_asc` に設定。
+   - Supabase クエリにおいて、月フィルタ (`.or()`) を **先に適用してから** ソート (`.order()`) とリミット (`.limit()`) を行うよう変更。これにより、他月の投稿が多い場合でも当該月のデータが欠損するのを防ぐ。
+   - `reaction_desc` (リアクション数順) の処理を削除し、`release_asc` と `newest` の2種に対応。
 
-2. **クライアントコンポーネントの改修 (`src/app/dashboard/dashboard-client.tsx`)**
-   - `DashboardClientProps` に `initialSortBy` を追加。
-   - `useState` の初期値に `initialSortBy` を使用。
-   - 並び替えの Select ボックス変更時に、`router.push` で `month` パラメータと併せて `sort` パラメータ付きの URL に遷移させ、状態を同期させる。
+2. **クライアントコンポーネントの調整 (`src/app/dashboard/dashboard-client.tsx`)**
+   - `SortOption` 型から `reaction_desc` を削除。
+   - `initialSortBy` のデフォルトを `release_asc` に変更。
+   - `Select` の選択肢を「公開日順」と「投稿順」に簡略化。
+   - クライアントサイドでのソートロジックからも `reaction_desc` のケースを削除。

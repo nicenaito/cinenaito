@@ -18,7 +18,7 @@ import {
 import { Film, Clapperboard } from 'lucide-react'
 import { toast } from 'sonner'
 
-type SortOption = 'reaction_desc' | 'newest' | 'release_asc'
+type SortOption = 'release_asc' | 'newest'
 const PAGE_SIZE = 9
 
 interface DashboardClientProps {
@@ -38,7 +38,7 @@ export function DashboardClient({
   isAdmin = false,
   isLoggedIn,
   reactedPlanIds,
-  initialSortBy = 'reaction_desc',
+  initialSortBy = 'release_asc',
 }: DashboardClientProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -82,14 +82,6 @@ export function DashboardClient({
   const displayedItems = useMemo(() => {
     const sorted = [...planItems]
     switch (sortBy) {
-      case 'reaction_desc':
-        sorted.sort((a, b) => {
-          if (b.reaction_count !== a.reaction_count) {
-            return b.reaction_count - a.reaction_count
-          }
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        })
-        break
       case 'newest':
         sorted.sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -138,14 +130,11 @@ export function DashboardClient({
               <SelectValue placeholder="並び順を選択" />
             </SelectTrigger>
             <SelectContent className="glass-card border-white/10">
-              <SelectItem value="reaction_desc" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
-                自分も観るが多い順
+              <SelectItem value="release_asc" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
+                公開日順
               </SelectItem>
               <SelectItem value="newest" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
-                新しい投稿順
-              </SelectItem>
-              <SelectItem value="release_asc" className="text-white hover:bg-cinema-gold/10 focus:bg-cinema-gold/10 focus:text-white">
-                公開日の早い順
+                投稿順
               </SelectItem>
             </SelectContent>
           </Select>
