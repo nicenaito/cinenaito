@@ -57,7 +57,7 @@ export function MovieForm({
       release_date: '',
       youtube_url: '',
       comment: '',
-      expectation: '気にはなっている',
+      expectation: '絶対観る',
       target_month: getCurrentMonth(),
       ...defaultValues,
     },
