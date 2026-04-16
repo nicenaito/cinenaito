@@ -33,22 +33,14 @@ export default async function DashboardPage({
   const sortParam = params.sort as 'newest' | 'release_asc' | undefined
   const initialSortBy = sortParam || 'release_asc'
 
-  // 映画予定を取得
-  const baseQuery = supabase
+  // 映画予定を取得（release_month または target_month が一致するものを取得）
+  // サーバー側は created_at DESC で取得し、公開日順の並び替えはクライアント側で処理
+  const q = supabase
     .from('movie_plans_with_stats')
     .select('*')
-    .or(`release_month.eq.${selectedMonth},and(release_month.is.null,target_month.eq.${selectedMonth})`)
-
-  let q = baseQuery
-  if (initialSortBy === 'newest') {
-    q = q.order('created_at', { ascending: false })
-  } else {
-    // release_asc (default)
-    q = q.order('release_month', { ascending: true, nullsFirst: false })
-         .order('target_month', { ascending: true })
-         .order('created_at', { ascending: false })
-  }
-  q = q.limit(DASHBOARD_FETCH_LIMIT)
+    .or(`release_month.eq.${selectedMonth},target_month.eq.${selectedMonth}`)
+    .order('created_at', { ascending: false })
+    .limit(DASHBOARD_FETCH_LIMIT)
 
   const [filteredResult, reactedPlanIdsResult, profileResult] = await Promise.all([
     q,
@@ -82,18 +74,13 @@ export default async function DashboardPage({
   let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
     console.error('データ取得エラー（release_month フィルタ）:', filteredResult.error)
-    let fallbackQuery = supabase
+    // release_month カラムがビューに存在しない場合のフォールバック
+    const fallbackResult = await supabase
       .from('movie_plans_with_stats')
       .select('*')
       .eq('target_month', selectedMonth)
-    if (initialSortBy === 'newest') {
-      fallbackQuery = fallbackQuery.order('created_at', { ascending: false })
-    } else {
-      fallbackQuery = fallbackQuery
-        .order('release_date', { ascending: true, nullsFirst: false })
-        .order('created_at', { ascending: false })
-    }
-    const fallbackResult = await fallbackQuery.limit(DASHBOARD_FETCH_LIMIT)
+      .order('created_at', { ascending: false })
+      .limit(DASHBOARD_FETCH_LIMIT)
     if (fallbackResult.error) {
       console.error('データ取得エラー（fallback）:', fallbackResult.error)
       plans = []
