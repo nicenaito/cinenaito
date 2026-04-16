@@ -83,7 +83,7 @@ export const MovieCard = memo(function MovieCard({
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-white truncate">
+            <h3 className="text-lg font-semibold text-white line-clamp-2 leading-snug break-words">
               {plan.title}
             </h3>
             <p className="text-xs text-slate-500 mt-1">
