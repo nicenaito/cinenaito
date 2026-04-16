@@ -100,6 +100,7 @@ CREATE TABLE movie_plans (
   title TEXT NOT NULL,
   release_date TEXT,
   release_month TEXT, -- YYYY-MM形式（公開日ベース）
+  sortable_release_date TEXT, -- YYYY-MM-DD形式（ソート用）
   movie_url TEXT, -- 映画.com URL
   youtube_url TEXT, -- YouTube予告編URL
   comment TEXT,
@@ -113,6 +114,7 @@ CREATE TABLE movie_plans (
 CREATE INDEX movie_plans_user_id_idx ON movie_plans(user_id);
 CREATE INDEX movie_plans_target_month_idx ON movie_plans(target_month);
 CREATE INDEX movie_plans_release_month_idx ON movie_plans(release_month);
+CREATE INDEX movie_plans_sortable_release_date_idx ON movie_plans(sortable_release_date);
 
 CREATE TRIGGER movie_plans_updated_at
   BEFORE UPDATE ON movie_plans

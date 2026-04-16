@@ -48,6 +48,7 @@ export interface Database {
           title: string
           release_date: string | null
           release_month: string | null
+          sortable_release_date: string | null
           movie_url: string | null
           youtube_url: string | null
           comment: string | null
@@ -62,6 +63,7 @@ export interface Database {
           title: string
           release_date?: string | null
           release_month?: string | null
+          sortable_release_date?: string | null
           movie_url?: string | null
           youtube_url?: string | null
           comment?: string | null
@@ -76,6 +78,7 @@ export interface Database {
           title?: string
           release_date?: string | null
           release_month?: string | null
+          sortable_release_date?: string | null
           movie_url?: string | null
           youtube_url?: string | null
           comment?: string | null
@@ -167,6 +170,7 @@ export interface Database {
           title: string
           release_date: string | null
           release_month: string | null
+          sortable_release_date: string | null
           movie_url: string | null
           youtube_url: string | null
           comment: string | null
