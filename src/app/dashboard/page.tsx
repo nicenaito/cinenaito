@@ -82,11 +82,18 @@ export default async function DashboardPage({
   let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
     console.error('データ取得エラー（release_month フィルタ）:', filteredResult.error)
-    const fallbackResult = await supabase
+    let fallbackQuery = supabase
       .from('movie_plans_with_stats')
       .select('*')
       .eq('target_month', selectedMonth)
-      .limit(DASHBOARD_FETCH_LIMIT)
+    if (initialSortBy === 'newest') {
+      fallbackQuery = fallbackQuery.order('created_at', { ascending: false })
+    } else {
+      fallbackQuery = fallbackQuery
+        .order('release_date', { ascending: true, nullsFirst: false })
+        .order('created_at', { ascending: false })
+    }
+    const fallbackResult = await fallbackQuery.limit(DASHBOARD_FETCH_LIMIT)
     if (fallbackResult.error) {
       console.error('データ取得エラー（fallback）:', fallbackResult.error)
       plans = []
