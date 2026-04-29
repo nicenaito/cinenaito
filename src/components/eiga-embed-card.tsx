@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchMoviePreviewFromEiga } from '@/app/actions'
 import { ExternalLink, Loader2 } from 'lucide-react'
@@ -93,13 +94,15 @@ export function EigaEmbedCard({ movieUrl, title }: EigaEmbedCardProps) {
         ) : preview ? (
           <div className="space-y-3">
             {preview.imageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={preview.imageUrl}
-                alt={preview.title}
-                className="w-full h-44 object-cover rounded-lg"
-                loading="lazy"
-              />
+              <div className="relative w-full h-44 rounded-lg overflow-hidden border border-white/5">
+                <Image
+                  src={preview.imageUrl}
+                  alt={preview.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover"
+                />
+              </div>
             )}
             <div className="space-y-1">
               <p className="text-sm font-semibold text-slate-100">{preview.title}</p>

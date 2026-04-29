@@ -47,34 +47,8 @@ export default async function DashboardPage({
   }
   q.limit(DASHBOARD_FETCH_LIMIT)
 
-  const [filteredResult, reactedPlanIdsResult, profileResult] = await Promise.all([
-    q,
-    user
-      ? supabase
-          .from('reactions')
-          .select('plan_id')
-          .eq('user_id', user.id)
-          .returns<{ plan_id: string }[]>()
-      : Promise.resolve({ data: [] as { plan_id: string }[] | null }),
-    user
-      ? supabase
-          .from('profiles')
-          .select('username, avatar_url, is_admin')
-          .eq('id', user.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null }),
-  ])
-
-  const reactedPlanIds = new Set(reactedPlanIdsResult.data?.map((r) => r.plan_id) || [])
-  const profile = profileResult.data
-  const isAdmin = !!profile?.is_admin
-  const headerAuthData = user
-    ? {
-        userId: user.id,
-        fullName: user.user_metadata?.full_name ?? null,
-        profile: profile || null,
-      }
-    : null
+  // 1. まず映画予定を取得
+  const filteredResult = await q
 
   let plans: MoviePlanWithStats[] = []
   if (filteredResult.error) {
@@ -101,6 +75,38 @@ export default async function DashboardPage({
   } else {
     plans = (filteredResult.data as MoviePlanWithStats[] | null) || []
   }
+
+  const planIds = plans.map((p) => p.id)
+
+  // 2. プランに関連するユーザー固有データを並列取得
+  const [reactedPlanIdsResult, profileResult] = await Promise.all([
+    user && planIds.length > 0
+      ? supabase
+          .from('reactions')
+          .select('plan_id')
+          .eq('user_id', user.id)
+          .in('plan_id', planIds)
+          .returns<{ plan_id: string }[]>()
+      : Promise.resolve({ data: [] as { plan_id: string }[] | null }),
+    user
+      ? supabase
+          .from('profiles')
+          .select('username, avatar_url, is_admin')
+          .eq('id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+  ])
+
+  const reactedPlanIds = new Set(reactedPlanIdsResult.data?.map((r) => r.plan_id) || [])
+  const profile = profileResult.data
+  const isAdmin = !!profile?.is_admin
+  const headerAuthData = user
+    ? {
+        userId: user.id,
+        fullName: user.user_metadata?.full_name ?? null,
+        profile: profile || null,
+      }
+    : null
 
   return (
     <div className="min-h-screen cinema-bg">

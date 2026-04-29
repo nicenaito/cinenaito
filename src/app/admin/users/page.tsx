@@ -7,6 +7,8 @@ import { Header } from '@/components/header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { formatRelativeTime } from '@/lib/helpers'
 
 export const metadata: Metadata = {
   title: 'ユーザー管理 - CineNaito',
@@ -81,9 +83,17 @@ export default async function AdminUsersPage() {
                   key={profile.id}
                   className="flex flex-col sm:flex-row sm:items-center gap-3 justify-between border border-slate-700 rounded-lg p-4"
                 >
-                  <div className="min-w-0">
-                    <p className="text-slate-100 font-medium truncate">{profile.username}</p>
-                    <p className="text-xs text-slate-500 truncate">{profile.id}</p>
+                  <div className="flex items-center gap-4 min-w-0">
+                    <Avatar className="w-10 h-10 ring-1 ring-white/10">
+                      <AvatarImage src={profile.avatar_url || undefined} />
+                      <AvatarFallback className="bg-slate-700 text-slate-300">
+                        {profile.username?.charAt(0).toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="text-slate-100 font-medium truncate">{profile.username}</p>
+                      <p className="text-[10px] text-slate-500 truncate mt-0.5">登録: {formatRelativeTime(profile.created_at)}</p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {profile.is_admin ? (
