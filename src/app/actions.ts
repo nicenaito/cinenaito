@@ -12,6 +12,7 @@ type MoviePlanUpdate = Database['public']['Tables']['movie_plans']['Update']
 type ReactionInsert = Database['public']['Tables']['reactions']['Insert']
 type CommentInsert = Database['public']['Tables']['plan_comments']['Insert']
 type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert']
+type WatchedInsert = Database['public']['Tables']['watched']['Insert']
 
 const ALLOWED_EMOJIS = ['👍', '😂', '❤️', '🎬', '🔥', '👀'] as const
 const PERF_DEBUG = process.env.NODE_ENV !== 'production' || process.env.ENABLE_PERF_LOG === 'true'
@@ -596,5 +597,56 @@ export async function toggleCommentReaction(commentId: string, emoji: string) {
     }
     logPerf('toggleCommentReaction', perfStart, { success: true, mode: 'insert' })
     return { success: true, reacted: true }
+  }
+}
+
+export async function toggleWatched(planId: string) {
+  const perfStart = perfNow()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    logPerf('toggleWatched', perfStart, { success: false, reason: 'no_user' })
+    return { success: false, watched: false, error: '認証が必要です' }
+  }
+
+  // 既存の鑑賞済みをチェック
+  const { data: existing } = await supabase
+    .from('watched')
+    .select('id')
+    .eq('plan_id', planId)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  const existingWatched = existing as { id: string } | null
+  if (existingWatched) {
+    // 鑑賞済みを解除
+    const { error } = await supabase
+      .from('watched')
+      .delete()
+      .eq('id', existingWatched.id)
+
+    if (error) {
+      logPerf('toggleWatched', perfStart, { success: false, mode: 'delete' })
+      return { success: false, watched: true, error: '鑑賞済み解除に失敗しました' }
+    }
+
+    logPerf('toggleWatched', perfStart, { success: true, mode: 'delete' })
+    return { success: true, watched: false }
+  } else {
+    // 鑑賞済みに追加
+    const insertData: WatchedInsert = {
+      plan_id: planId,
+      user_id: user.id,
+    }
+    const { error } = await supabase.from('watched').insert(insertData)
+
+    if (error) {
+      logPerf('toggleWatched', perfStart, { success: false, mode: 'insert' })
+      return { success: false, watched: false, error: '鑑賞済み登録に失敗しました' }
+    }
+
+    logPerf('toggleWatched', perfStart, { success: true, mode: 'insert' })
+    return { success: true, watched: true }
   }
 }

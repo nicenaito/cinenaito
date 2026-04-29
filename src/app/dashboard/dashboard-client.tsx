@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { MovieCard } from '@/components/movie-card'
 import { MonthFilter } from '@/components/month-filter'
-import { toggleReaction, deleteMoviePlan } from '@/app/actions'
+import { toggleReaction, deleteMoviePlan, toggleWatched } from '@/app/actions'
 import { extractSortableDateFromReleaseDate } from '@/lib/helpers'
 import { MoviePlanWithStats } from '@/types/database.types'
 import { Button } from '@/components/ui/button'
@@ -26,9 +26,12 @@ interface DashboardClientProps {
   plans: MoviePlanWithStats[]
   selectedMonth: string
   currentUserId?: string
+  currentUsername?: string
+  currentAvatarUrl?: string | null
   isAdmin?: boolean
   isLoggedIn: boolean
   reactedPlanIds: string[]
+  watchedPlanIds: string[]
   initialSortBy?: SortOption
 }
 
@@ -36,9 +39,12 @@ export function DashboardClient({
   plans,
   selectedMonth,
   currentUserId,
+  currentUsername,
+  currentAvatarUrl,
   isAdmin = false,
   isLoggedIn,
   reactedPlanIds,
+  watchedPlanIds,
   initialSortBy = 'release_asc',
 }: DashboardClientProps) {
   const router = useRouter()
@@ -47,6 +53,7 @@ export function DashboardClient({
   const [sortBy, setSortBy] = useState<SortOption>(initialSortBy)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const reactedPlanIdSet = useMemo(() => new Set(reactedPlanIds), [reactedPlanIds])
+  const watchedPlanIdSet = useMemo(() => new Set(watchedPlanIds), [watchedPlanIds])
 
   useEffect(() => {
     setPlanItems(plans)
@@ -69,6 +76,14 @@ export function DashboardClient({
       return { success: false, reacted: false }
     }
     return await toggleReaction(planId)
+  }, [isLoggedIn, handleRequireLogin])
+
+  const handleToggleWatched = useCallback(async (planId: string) => {
+    if (!isLoggedIn) {
+      handleRequireLogin()
+      return { success: false, watched: false }
+    }
+    return await toggleWatched(planId)
   }, [isLoggedIn, handleRequireLogin])
 
   const handleDelete = useCallback(async (planId: string) => {
@@ -171,10 +186,14 @@ export function DashboardClient({
                 key={plan.id}
                 plan={plan}
                 currentUserId={currentUserId}
+                currentUsername={currentUsername}
+                currentAvatarUrl={currentAvatarUrl}
                 isAdmin={isAdmin}
                 isLoggedIn={isLoggedIn}
                 userReacted={reactedPlanIdSet.has(plan.id)}
+                userWatched={watchedPlanIdSet.has(plan.id)}
                 onReaction={handleReaction}
+                onToggleWatched={handleToggleWatched}
                 onRequireLogin={handleRequireLogin}
                 onDelete={handleDelete}
                 index={i}

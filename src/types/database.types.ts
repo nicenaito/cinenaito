@@ -161,6 +161,27 @@ export interface Database {
         }
         Relationships: []
       }
+      watched: {
+        Row: {
+          id: string
+          plan_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          plan_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          plan_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       movie_plans_with_stats: {
@@ -182,6 +203,8 @@ export interface Database {
           avatar_url: string | null
           reaction_count: number
           comment_count: number
+          watched_count: number
+          watched_users: WatchedUser[]
         }
         Relationships: []
       }
@@ -198,9 +221,16 @@ export interface Database {
   }
 }
 
+export interface WatchedUser {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type MoviePlan = Database['public']['Tables']['movie_plans']['Row']
 export type PlanComment = Database['public']['Tables']['plan_comments']['Row']
 export type Reaction = Database['public']['Tables']['reactions']['Row']
 export type CommentReaction = Database['public']['Tables']['comment_reactions']['Row']
+export type Watched = Database['public']['Tables']['watched']['Row']
 export type MoviePlanWithStats = Database['public']['Views']['movie_plans_with_stats']['Row']

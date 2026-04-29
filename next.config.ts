@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'media.eiga.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'eiga.com',
       },
       {

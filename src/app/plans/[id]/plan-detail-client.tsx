@@ -3,15 +3,16 @@
 import { useState, useEffect, useTransition, useRef, useMemo } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { toggleReaction, addComment, deleteComment, toggleCommentReaction } from '@/app/actions'
+import { toggleReaction, addComment, deleteComment, toggleCommentReaction, toggleWatched } from '@/app/actions'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Popcorn, Send, Trash2, Loader2, Copy, Check, MessageCircle, SmilePlus } from 'lucide-react'
+import { Popcorn, Send, Trash2, Loader2, Copy, Check, MessageCircle, SmilePlus, Eye, EyeOff } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/helpers'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { WatchedUser } from '@/types/database.types'
 
 const ALLOWED_EMOJIS = ['👍', '😂', '❤️', '🎬', '🔥', '👀'] as const
 
@@ -35,10 +36,14 @@ interface CommentReactionData {
 interface PlanDetailClientProps {
   planId: string
   currentUserId?: string
+  currentUsername?: string
+  currentAvatarUrl?: string | null
   isAdmin: boolean
   isLoggedIn: boolean
   initialReacted: boolean
   initialReactionCount: number
+  initialWatched: boolean
+  initialWatchedUsers: WatchedUser[]
   comments: Comment[]
   commentReactions: CommentReactionData[]
 }
@@ -54,10 +59,14 @@ function shouldGroupWithPrevious(current: Comment, previous: Comment | undefined
 export function PlanDetailClient({
   planId,
   currentUserId,
+  currentUsername,
+  currentAvatarUrl,
   isAdmin,
   isLoggedIn,
   initialReacted,
   initialReactionCount,
+  initialWatched,
+  initialWatchedUsers,
   comments: initialComments,
   commentReactions: initialCommentReactions,
 }: PlanDetailClientProps) {
@@ -65,6 +74,8 @@ export function PlanDetailClient({
   const pathname = usePathname()
   const [reacted, setReacted] = useState(initialReacted)
   const [reactionCount, setReactionCount] = useState(initialReactionCount)
+  const [watched, setWatched] = useState(initialWatched)
+  const [watchedUsers, setWatchedUsers] = useState<WatchedUser[]>(initialWatchedUsers)
   const [comments, setComments] = useState(initialComments)
   const [commentReactions, setCommentReactions] = useState(initialCommentReactions)
   const [newComment, setNewComment] = useState('')
@@ -124,6 +135,42 @@ export function PlanDetailClient({
       if (!result.success) {
         setReacted(!newReacted)
         setReactionCount(reactionCount)
+        toast.error(result.error)
+      }
+    })
+  }
+
+  const handleToggleWatched = () => {
+    if (!isLoggedIn) {
+      handleRequireLogin()
+      return
+    }
+    const newWatched = !watched
+    setWatched(newWatched)
+
+    // 楽観的更新
+    if (newWatched && currentUserId) {
+      setWatchedUsers((prev) => [
+        ...prev,
+        {
+          user_id: currentUserId,
+          username: currentUsername || 'ユーザー',
+          avatar_url: currentAvatarUrl ?? null,
+        },
+      ])
+    } else {
+      setWatchedUsers((prev) => prev.filter((u) => u.user_id !== currentUserId))
+    }
+
+    startTransition(async () => {
+      const result = await toggleWatched(planId)
+      if (!result.success) {
+        setWatched(!newWatched)
+        if (newWatched) {
+          setWatchedUsers((prev) => prev.filter((u) => u.user_id !== currentUserId))
+        } else {
+          setWatchedUsers(initialWatchedUsers)
+        }
         toast.error(result.error)
       }
     })
@@ -289,23 +336,68 @@ export function PlanDetailClient({
 
   return (
     <div className="mt-6 space-y-6">
-      {/* リアクションボタン */}
-      <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          onClick={handleReaction}
-          disabled={isPending}
-          className={cn(
-            'gap-2 transition-all duration-200',
-            reacted
-              ? 'border-cinema-gold/50 text-cinema-gold hover:bg-cinema-gold/10'
-              : 'border-white/10 text-slate-400 hover:text-cinema-gold-light hover:border-cinema-gold/30'
-          )}
-        >
-          <Popcorn className={cn('w-5 h-5 transition-transform', reacted && 'fill-current scale-110')} />
-          自分も観る
-          {reactionCount > 0 && <span>({reactionCount})</span>}
-        </Button>
+      {/* リアクション・鑑賞済みボタン */}
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={handleReaction}
+            disabled={isPending}
+            className={cn(
+              'gap-2 transition-all duration-200',
+              reacted
+                ? 'border-cinema-gold/50 text-cinema-gold hover:bg-cinema-gold/10'
+                : 'border-white/10 text-slate-400 hover:text-cinema-gold-light hover:border-cinema-gold/30'
+            )}
+          >
+            <Popcorn className={cn('w-5 h-5 transition-transform', reacted && 'fill-current scale-110')} />
+            自分も観る
+            {reactionCount > 0 && <span>({reactionCount})</span>}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={handleToggleWatched}
+            disabled={isPending}
+            className={cn(
+              'gap-2 transition-all duration-200',
+              watched
+                ? 'border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10'
+                : 'border-white/10 text-slate-400 hover:text-emerald-300 hover:border-emerald-500/30'
+            )}
+          >
+            {watched ? (
+              <Eye className={cn('w-5 h-5 transition-transform fill-current scale-110')} />
+            ) : (
+              <EyeOff className="w-5 h-5 transition-transform" />
+            )}
+            鑑賞済み
+            {watchedUsers.length > 0 && <span>({watchedUsers.length})</span>}
+          </Button>
+        </div>
+
+        {/* 鑑賞済みユーザー一覧 */}
+        {watchedUsers.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-slate-500">鑑賞済み:</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {watchedUsers.map((user) => (
+                <div
+                  key={user.user_id}
+                  className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20"
+                >
+                  <Avatar className="w-5 h-5">
+                    <AvatarImage src={user.avatar_url || undefined} />
+                    <AvatarFallback className="bg-emerald-500/20 text-emerald-400 text-[9px] font-medium">
+                      {user.username?.charAt(0).toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-emerald-300 font-medium">{user.username}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Discord風コメントセクション */}

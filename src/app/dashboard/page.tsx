@@ -79,10 +79,18 @@ export default async function DashboardPage({
   const planIds = plans.map((p) => p.id)
 
   // 2. プランに関連するユーザー固有データを並列取得
-  const [reactedPlanIdsResult, profileResult] = await Promise.all([
+  const [reactedPlanIdsResult, watchedPlanIdsResult, profileResult] = await Promise.all([
     user && planIds.length > 0
       ? supabase
           .from('reactions')
+          .select('plan_id')
+          .eq('user_id', user.id)
+          .in('plan_id', planIds)
+          .returns<{ plan_id: string }[]>()
+      : Promise.resolve({ data: [] as { plan_id: string }[] | null }),
+    user && planIds.length > 0
+      ? supabase
+          .from('watched')
           .select('plan_id')
           .eq('user_id', user.id)
           .in('plan_id', planIds)
@@ -98,6 +106,7 @@ export default async function DashboardPage({
   ])
 
   const reactedPlanIds = new Set(reactedPlanIdsResult.data?.map((r) => r.plan_id) || [])
+  const watchedPlanIds = new Set(watchedPlanIdsResult.data?.map((w) => w.plan_id) || [])
   const profile = profileResult.data
   const isAdmin = !!profile?.is_admin
   const headerAuthData = user
@@ -116,9 +125,12 @@ export default async function DashboardPage({
           plans={plans}
           selectedMonth={selectedMonth}
           currentUserId={user?.id}
+          currentUsername={profile?.username}
+          currentAvatarUrl={profile?.avatar_url}
           isAdmin={isAdmin}
           isLoggedIn={!!user}
           reactedPlanIds={Array.from(reactedPlanIds)}
+          watchedPlanIds={Array.from(watchedPlanIds)}
           initialSortBy={initialSortBy}
         />
       </main>

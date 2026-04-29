@@ -12,7 +12,7 @@ import { ArrowLeft, ExternalLink, Pencil, Play } from 'lucide-react'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
 import { PlanDetailClient } from './plan-detail-client'
 import { deleteMoviePlan } from '@/app/actions'
-import { ExpectationLevel } from '@/types/database.types'
+import { ExpectationLevel, WatchedUser } from '@/types/database.types'
 
 interface MoviePlanWithProfile {
   id: string
@@ -73,6 +73,8 @@ export default async function PlanDetailPage({
     { data: commentsData },
     reactionResult,
     { count: reactionCount },
+    watchedResult,
+    watchedUsersResult,
     profileResult,
   ] = await Promise.all([
     supabase
@@ -102,6 +104,18 @@ export default async function PlanDetailPage({
     supabase
       .from('reactions')
       .select('*', { count: 'exact', head: true })
+      .eq('plan_id', id),
+    user
+      ? supabase
+          .from('watched')
+          .select('id')
+          .eq('plan_id', id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from('watched')
+      .select('user_id')
       .eq('plan_id', id),
     user
       ? supabase
@@ -147,6 +161,22 @@ export default async function PlanDetailPage({
   }
 
   const reaction = reactionResult.data as { id: string } | null
+  const watchedRecord = watchedResult.data as { id: string } | null
+
+  // watchedユーザーのプロフィール情報を取得
+  const watchedUserIds = (watchedUsersResult.data || []).map((w: { user_id: string }) => w.user_id)
+  let watchedUsers: WatchedUser[] = []
+  if (watchedUserIds.length > 0) {
+    const { data: watchedProfilesData } = await supabase
+      .from('profiles')
+      .select('id, username, avatar_url')
+      .in('id', watchedUserIds)
+    watchedUsers = (watchedProfilesData || []).map((p: { id: string; username: string; avatar_url: string | null }) => ({
+      user_id: p.id,
+      username: p.username,
+      avatar_url: p.avatar_url,
+    }))
+  }
 
   return (
     <div className="min-h-screen cinema-bg">
@@ -255,10 +285,14 @@ export default async function PlanDetailPage({
           <PlanDetailClient
             planId={id}
             currentUserId={user?.id}
+            currentUsername={profile?.username}
+            currentAvatarUrl={profile?.avatar_url}
             isAdmin={isAdmin}
             isLoggedIn={!!user}
             initialReacted={!!reaction}
             initialReactionCount={reactionCount || 0}
+            initialWatched={!!watchedRecord}
+            initialWatchedUsers={watchedUsers}
             comments={comments}
             commentReactions={commentReactions}
           />

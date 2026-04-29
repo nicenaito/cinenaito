@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ExpectationBadge } from '@/components/expectation-badge'
 import { ReactionButton } from '@/components/reaction-button'
+import { WatchedButton } from '@/components/watched-button'
 import { formatRelativeTime, formatMonth } from '@/lib/helpers'
-import { MoviePlanWithStats } from '@/types/database.types'
+import { MoviePlanWithStats, WatchedUser } from '@/types/database.types'
 import { MessageCircle, Trash2, Pencil, ExternalLink, Play } from 'lucide-react'
 import Link from 'next/link'
 
@@ -22,10 +23,14 @@ const EigaEmbedCard = dynamic(() => import('@/components/eiga-embed-card').then(
 interface MovieCardProps {
   plan: MoviePlanWithStats
   currentUserId?: string
+  currentUsername?: string
+  currentAvatarUrl?: string | null
   isAdmin?: boolean
   isLoggedIn: boolean
   userReacted: boolean
+  userWatched: boolean
   onReaction: (planId: string) => Promise<{ success: boolean; reacted: boolean }>
+  onToggleWatched: (planId: string) => Promise<{ success: boolean; watched: boolean }>
   onRequireLogin: () => void
   onDelete?: (planId: string) => Promise<void>
   index?: number
@@ -34,10 +39,14 @@ interface MovieCardProps {
 export const MovieCard = memo(function MovieCard({
   plan,
   currentUserId,
+  currentUsername,
+  currentAvatarUrl,
   isAdmin = false,
   isLoggedIn,
   userReacted,
+  userWatched,
   onReaction,
+  onToggleWatched,
   onRequireLogin,
   onDelete,
   index = 0,
@@ -136,61 +145,76 @@ export const MovieCard = memo(function MovieCard({
       </CardContent>
 
       <CardFooter className="border-t border-white/5 pt-4">
-        <div className="flex items-center gap-3 w-full flex-wrap">
-          {/* リアクションボタン */}
-          <ReactionButton
+        <div className="flex flex-col gap-3 w-full">
+          {/* 鑑賞済みセクション */}
+          <WatchedButton
             planId={plan.id}
-            initialCount={plan.reaction_count}
-            initialReacted={userReacted}
-            onReaction={onReaction}
+            initialWatched={userWatched}
+            initialWatchedUsers={plan.watched_users || []}
+            onToggleWatched={onToggleWatched}
             isLoggedIn={isLoggedIn}
             onRequireLogin={onRequireLogin}
+            currentUserId={currentUserId}
+            currentUsername={currentUsername}
+            currentAvatarUrl={currentAvatarUrl}
           />
 
-          {/* コメント数 */}
-          <Link href={`/plans/${plan.id}`} prefetch={false}>
-            <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-cinema-gold-light transition-colors">
-              <MessageCircle className="w-4 h-4" />
-              <span>コメント</span>
-              {plan.comment_count > 0 && <span className="text-cinema-gold/70">({plan.comment_count})</span>}
-            </Button>
-          </Link>
+          <div className="flex items-center gap-3 flex-wrap">
+            {/* リアクションボタン */}
+            <ReactionButton
+              planId={plan.id}
+              initialCount={plan.reaction_count}
+              initialReacted={userReacted}
+              onReaction={onReaction}
+              isLoggedIn={isLoggedIn}
+              onRequireLogin={onRequireLogin}
+            />
 
-          {/* 外部リンク */}
-          {plan.movie_url && (
-            <a href={plan.movie_url} target="_blank" rel="noopener noreferrer" title="映画.comで見る">
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-cinema-gold-light transition-colors px-2">
-                <ExternalLink className="w-4 h-4" />
-              </Button>
-            </a>
-          )}
-          {plan.youtube_url && (
-            <a href={plan.youtube_url} target="_blank" rel="noopener noreferrer" title="YouTube予告編">
-              <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-400 transition-colors px-2">
-                <Play className="w-4 h-4" />
-              </Button>
-            </a>
-          )}
-
-          {canEdit && (
-            <Link href={`/plans/${plan.id}/edit`} prefetch={false}>
-              <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300 transition-colors">
-                <Pencil className="w-4 h-4" />
-                <span className="hidden sm:inline">編集</span>
+            {/* コメント数 */}
+            <Link href={`/plans/${plan.id}`} prefetch={false}>
+              <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-cinema-gold-light transition-colors">
+                <MessageCircle className="w-4 h-4" />
+                <span>コメント</span>
+                {plan.comment_count > 0 && <span className="text-cinema-gold/70">({plan.comment_count})</span>}
               </Button>
             </Link>
-          )}
 
-          {canDelete && onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDelete}
-              className="ml-auto text-red-400/70 hover:text-red-400 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          )}
+            {/* 外部リンク */}
+            {plan.movie_url && (
+              <a href={plan.movie_url} target="_blank" rel="noopener noreferrer" title="映画.comで見る">
+                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-cinema-gold-light transition-colors px-2">
+                  <ExternalLink className="w-4 h-4" />
+                </Button>
+              </a>
+            )}
+            {plan.youtube_url && (
+              <a href={plan.youtube_url} target="_blank" rel="noopener noreferrer" title="YouTube予告編">
+                <Button variant="ghost" size="sm" className="text-slate-400 hover:text-red-400 transition-colors px-2">
+                  <Play className="w-4 h-4" />
+                </Button>
+              </a>
+            )}
+
+            {canEdit && (
+              <Link href={`/plans/${plan.id}/edit`} prefetch={false}>
+                <Button variant="ghost" size="sm" className="gap-2 text-slate-400 hover:text-slate-300 transition-colors">
+                  <Pencil className="w-4 h-4" />
+                  <span className="hidden sm:inline">編集</span>
+                </Button>
+              </Link>
+            )}
+
+            {canDelete && onDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                className="ml-auto text-red-400/70 hover:text-red-400 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
         </div>
       </CardFooter>
     </Card>
