@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Film, Clapperboard, Plus, LayoutGrid, List } from 'lucide-react'
+import { Film, Clapperboard, Plus, LayoutGrid, List, Copy } from 'lucide-react'
 import { toast } from 'sonner'
 
 type SortOption = 'release_asc' | 'newest'
@@ -122,6 +122,17 @@ export function DashboardClient({
   )
 
   const hasMore = displayedItems.length > visibleCount
+
+  const handleCopyList = useCallback(async () => {
+    const text = displayedItems
+      .map((plan) => {
+        const date = plan.release_date || plan.release_month || plan.target_month || ''
+        return `${plan.title}\t${date}`
+      })
+      .join('\n')
+    await navigator.clipboard.writeText(text)
+    toast.success('一覧をクリップボードにコピーしました')
+  }, [displayedItems])
 
   return (
     <div>
@@ -237,6 +248,18 @@ export function DashboardClient({
         </>
       ) : (
         <>
+          <div className="flex justify-end mb-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleCopyList}
+              className="gap-2 text-slate-400 hover:text-cinema-gold-light transition-colors"
+            >
+              <Copy className="w-4 h-4" />
+              一覧をコピー
+            </Button>
+          </div>
           <div className="flex flex-col gap-2">
             {visibleItems.map((plan, i) => (
               <MovieListItem
